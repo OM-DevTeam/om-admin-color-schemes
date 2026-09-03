@@ -1,0 +1,13 @@
+// OM Admin Color Schemes — shared mixins.
+@use "sass:map";
+
+// Emits a `:root { --om-*: ...; }` block from one of _tokens.scss's maps.
+// Generic over the map's keys so adding/removing a token never requires
+// touching this file.
+@mixin om-root-vars($tokens) {
+	:root {
+		@each $name, $value in $tokens {
+			--om-#{$name}: #{$value};
+		}
+	}
+}

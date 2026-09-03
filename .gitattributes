@@ -1,0 +1,18 @@
+# NOT the release mechanism — see .github/workflows/draft-release.yml and
+# dev/create-release-files.sh for that (a hand-assembled zip attached to a
+# GitHub Release, since compiled src/*.css is never committed to begin
+# with — see CLAUDE.md's "Releases" section).
+#
+# This only trims dev-only files from GitHub's auto-generated "Download
+# ZIP" / release source archive, in case anyone grabs that by mistake
+# instead of the actual release asset. Since src/*.css isn't tracked,
+# that raw source archive was never installable as a plugin anyway.
+
+/scss               export-ignore
+/package.json       export-ignore
+/package-lock.json  export-ignore
+/.stylelintrc.cjs   export-ignore
+/.github            export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/CLAUDE.md          export-ignore

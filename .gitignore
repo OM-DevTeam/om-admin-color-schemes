@@ -1,0 +1,7 @@
+node_modules/
+
+# Compiled from scss/ by `npm run build` — never tracked. Releases are
+# built fresh from scss/ by .github/workflows/draft-release.yml and
+# shipped as a GitHub Release zip asset, not via committed CSS.
+/src/
+/releases/

@@ -1,0 +1,7 @@
+// OM Dark — dark-mode entry point for the OM Admin Color Schemes color scheme.
+// Token values live in _tokens.scss; component rules live in _shared.scss.
+@use "tokens";
+@use "mixins";
+@use "shared";
+@include mixins.om-root-vars(tokens.$dark);
+@include shared.styles;

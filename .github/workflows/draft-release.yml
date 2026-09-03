@@ -1,0 +1,39 @@
+name: "Draft new release"
+run-name: "Draft release: `${{ inputs.version }}`"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number"
+        required: true
+
+jobs:
+
+  draft-new-release:
+    name: "Draft new release"
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+      - name: "Create release artifact"
+        run: sh dev/create-release-files.sh
+
+      - name: "Draft new release"
+        uses: softprops/action-gh-release@v2
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          draft: true
+          tag_name: "${{ github.event.inputs.version }}"
+          name: "${{ github.event.inputs.version }}"
+          files: releases/om-admin-color-schemes.zip

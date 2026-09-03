@@ -1,0 +1,26 @@
+{
+  "name": "om-admin-color-schemes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SCSS build for the OM Admin Color Schemes WordPress admin color scheme.",
+  "scripts": {
+    "build": "sass scss/om-light.scss:src/om-light.css scss/om-dark.scss:src/om-dark.css scss/om-system.scss:src/om-system.css --no-source-map --style=expanded",
+    "watch": "sass --watch scss/om-light.scss:src/om-light.css scss/om-dark.scss:src/om-dark.css scss/om-system.scss:src/om-system.css --no-source-map",
+    "lint": "stylelint \"scss/**/*.scss\"",
+    "lint:fix": "stylelint \"scss/**/*.scss\" --fix"
+  },
+  "devDependencies": {
+    "@stylistic/stylelint-config": "*",
+    "@stylistic/stylelint-plugin": "*",
+    "sass": "*",
+    "stylelint": "*",
+    "stylelint-config-standard": "*",
+    "stylelint-config-standard-scss": "*",
+    "stylelint-high-performance-animation": "*",
+    "stylelint-order": "*",
+    "stylelint-plugin-defensive-css": "*"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true
+  }
+}

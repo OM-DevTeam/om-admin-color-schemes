@@ -1,0 +1,14 @@
+// OM System — follows the OS/browser prefers-color-scheme setting.
+// Applies tokens.$light as the default/fallback, then swaps to tokens.$dark
+// inside a prefers-color-scheme: dark query. Because both this file and
+// om-light.scss/om-dark.scss pull from the same _tokens.scss maps, the
+// three output files can no longer drift out of sync by hand.
+@use "tokens";
+@use "mixins";
+@use "shared";
+@include mixins.om-root-vars(tokens.$light);
+@include shared.styles;
+
+@media (prefers-color-scheme: dark) {
+	@include mixins.om-root-vars(tokens.$dark);
+}

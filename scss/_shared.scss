@@ -1,0 +1,1612 @@
+// OM Admin Color Schemes — shared component rules
+// ------------------------------------------------
+// Every selector for the scheme lives in the styles() mixin below. It never
+// sets colors directly — everything reads from --om-* custom properties.
+// Each of the three entry points (om-light.scss / om-dark.scss /
+// om-system.scss) includes mixins.om-root-vars() to supply those properties,
+// then includes this mixin for the component rules that read them.
+@mixin styles {
+	// -------------------------------------------------- //
+	// Base admin colors WP itself reads for a handful of  //
+	// built-in / block-editor UI accents.                 //
+	// -------------------------------------------------- //
+	:root {
+		--wp-admin-theme-color: var(--om-link-color);
+		--wp-admin-theme-color-darker-10: var(--om-link-hover);
+		--wp-admin-theme-color-darker-20: var(--om-link-hover);
+
+		// Several core rules read this comma-separated RGB-channel form
+		// directly (e.g. `.highlight { background-color: rgba(var(
+		// --wp-admin-theme-color--rgb), 0.08); }`, and a button-group
+		// active state) to build a translucent tint of the theme color.
+		// WP's own named schemes populate this automatically; a custom
+		// scheme registered via wp_admin_css_color() doesn't get it for
+		// free, so without this, every core rule using that pattern falls
+		// back to an invalid/unrendered rgba() — usually reading as an
+		// unthemed white/transparent patch.
+		// stylelint-disable-next-line custom-property-pattern -- matches WP core's own literal variable name
+		--wp-admin-theme-color--rgb: var(--om-link-color-rgb);
+		--wp-admin-border-width-focus: 2px;
+	}
+
+	// -------------------------------------------------- //
+	// Page chrome                                         //
+	// -------------------------------------------------- //
+	html.wp-toolbar {
+		background: var(--om-body-bg);
+	}
+
+	body {
+		background: var(--om-body-bg);
+		color: var(--om-body-text);
+	}
+
+	#wpcontent,
+	#wpfooter {
+		color: var(--om-body-text);
+	}
+
+	.wrap h1,
+	.wrap h1.wp-heading-inline,
+	.wrap h2:not(.nav-tab-wrapper),
+	h1,
+	h2,
+	h3 {
+		color: var(--om-heading-color);
+	}
+
+	a {
+		color: var(--om-link-color);
+	}
+
+	a:hover,
+	a:active,
+	a:focus {
+		color: var(--om-link-hover);
+	}
+
+	// Generic focus ring, used across inputs/buttons/links
+	a:focus,
+	button:focus,
+	.wp-core-ui .button:focus,
+	input[type="text"]:focus,
+	input[type="search"]:focus,
+	input[type="password"]:focus,
+	input[type="number"]:focus,
+	input[type="email"]:focus,
+	input[type="url"]:focus,
+	select:focus,
+	textarea:focus {
+		border-color: var(--om-focus-color) !important;
+		box-shadow: 0 0 0 1px var(--om-focus-color) !important;
+		outline: 2px solid transparent;
+	}
+
+	// -------------------------------------------------- //
+	// Admin bar (#wpadminbar)                             //
+	// -------------------------------------------------- //
+	#wpadminbar {
+		background: var(--om-adminbar-bg);
+	}
+
+	#wpadminbar .ab-item,
+	#wpadminbar a.ab-item,
+	#wpadminbar > #wp-toolbar span.ab-label,
+	#wpadminbar > #wp-toolbar span.noticon {
+		color: var(--om-adminbar-text);
+	}
+
+	#wpadminbar .ab-icon,
+	#wpadminbar .ab-icon::before,
+	#wpadminbar .ab-item::before,
+	#wpadminbar .ab-item::after {
+		color: var(--om-adminbar-text);
+	}
+
+	#wpadminbar:not(.mobile) > #wp-toolbar > #wp-admin-bar-root-default > li:hover > .ab-item,
+	#wpadminbar:not(.mobile) > #wp-toolbar > #wp-admin-bar-root-default > li > .ab-item:focus,
+	#wpadminbar:not(.mobile) .ab-top-menu > li:hover > .ab-item,
+	#wpadminbar:not(.mobile) .ab-top-menu > li > .ab-item:focus,
+	#wpadminbar:not(.mobile) .ab-top-menu > li.hover > .ab-item {
+		background: var(--om-adminbar-hover-bg);
+		color: var(--om-adminbar-hover-text);
+	}
+
+	// admin-bar.css's `#wpadminbar.nojq .quicklinks .ab-top-menu > li > .ab-item:focus`
+	// out-specifies the block above for the My Account / search items — WP
+	// never actually strips the `.nojq` class (only `.nojs` gets removed by
+	// JS), so this is a live default state, not an edge case.
+	#wpadminbar.nojq .quicklinks .ab-top-menu > li > .ab-item:focus {
+		background: var(--om-adminbar-hover-bg);
+		color: var(--om-adminbar-hover-text);
+	}
+
+	#wpadminbar:not(.mobile) li:hover .ab-icon::before,
+	#wpadminbar:not(.mobile) li:hover .ab-item::before,
+	#wpadminbar:not(.mobile) li.hover .ab-icon::before {
+		color: var(--om-adminbar-hover-text);
+	}
+
+	#wpadminbar .menupop .ab-sub-wrapper {
+		background: var(--om-menu-hover-bg);
+	}
+
+	#wpadminbar .ab-submenu .ab-item,
+	#wpadminbar .quicklinks .menupop ul.ab-sub-secondary .ab-item {
+		background: var(--om-menu-hover-bg);
+		color: var(--om-adminbar-text);
+	}
+
+	#wpadminbar .ab-submenu .ab-item:hover,
+	#wpadminbar .ab-submenu > li > .ab-item:focus {
+		background: var(--om-menu-current-bg);
+		color: var(--om-menu-current-text);
+	}
+
+	// admin-bar.css's own `.quicklinks .menupop ul li a:hover/:focus { color }`
+	// out-specifies the rule above on color alone — match it to win the tie.
+	#wpadminbar .quicklinks .menupop ul li a:hover,
+	#wpadminbar .quicklinks .menupop ul li a:focus {
+		color: var(--om-menu-current-text);
+	}
+
+	#wpadminbar #wp-admin-bar-my-account.with-avatar #wp-admin-bar-user-info .display-name {
+		color: var(--om-adminbar-text);
+	}
+
+	// -------------------------------------------------- //
+	// Left-hand admin menu (#adminmenu)                   //
+	// -------------------------------------------------- //
+	#adminmenumain,
+	#adminmenuback,
+	#adminmenuwrap,
+	#adminmenu {
+		background: var(--om-menu-bg);
+	}
+
+	// Deliberately darker than --om-menu-bg (not lighter, the way core's
+	// own submenu flyout is) so a submenu reads as clearly its own
+	// distinct surface against the top-level menu items, rather than
+	// blending into them.
+	#adminmenu .wp-submenu {
+		background: var(--om-menu-submenu-bg);
+	}
+
+	#adminmenu a {
+		color: var(--om-menu-text);
+	}
+
+	#adminmenu div.wp-menu-image::before {
+		color: var(--om-menu-icon);
+	}
+
+	#adminmenu li.menu-top:hover,
+	#adminmenu li.opensub > a.menu-top,
+	#adminmenu li > a.menu-top:focus {
+		background: var(--om-menu-hover-bg);
+		color: var(--om-menu-hover-text);
+	}
+
+	#adminmenu li.menu-top:hover div.wp-menu-image::before,
+	#adminmenu li.opensub > a.menu-top div.wp-menu-image::before {
+		color: var(--om-menu-hover-icon);
+	}
+
+	#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu,
+	#adminmenu li.current a.menu-top,
+	#adminmenu li.wp-has-current-submenu .wp-submenu .wp-submenu-head {
+		background: var(--om-menu-current-bg);
+		color: var(--om-menu-current-text);
+	}
+
+	#adminmenu li.wp-has-current-submenu div.wp-menu-image::before,
+	#adminmenu li.current div.wp-menu-image::before {
+		color: var(--om-menu-current-icon);
+	}
+
+	// admin-menu.css's `li.wp-has-current-submenu a:focus div.wp-menu-image:before`
+	// out-specifies the rule above, so the icon reverts to a hardcoded white
+	// on keyboard focus without this.
+	#adminmenu li.wp-has-current-submenu a:focus div.wp-menu-image::before {
+		color: var(--om-menu-current-icon);
+	}
+
+	#adminmenu .wp-submenu a,
+	#adminmenu .wp-has-current-submenu .wp-submenu a {
+		color: var(--om-menu-text);
+	}
+
+	#adminmenu .wp-submenu a:hover,
+	#adminmenu .wp-submenu a:focus,
+	#adminmenu .wp-has-current-submenu .wp-submenu a:hover,
+	#adminmenu .wp-has-current-submenu .wp-submenu a:focus {
+		color: var(--om-menu-current-bg);
+	}
+
+	// The last two selectors here specifically need to out-specificity WP
+	// core's admin-menu.css default (`ul#adminmenu a.wp-has-current-submenu:after,
+	// ul#adminmenu > li.current > a.current:after`) for the current-item arrow.
+	// See "Specificity gotcha" in CLAUDE.md before touching this rule.
+	#adminmenu li.wp-has-current-submenu .wp-submenu li.current a,
+	#adminmenu a.wp-has-current-submenu::after,
+	#adminmenu li.current a.menu-top::after,
+	#adminmenu li.wp-has-current-submenu::after,
+	body.wp-admin ul#adminmenu a.wp-has-current-submenu::after,
+	body.wp-admin ul#adminmenu > li.current > a.current::after {
+		border-right-color: var(--om-body-bg);
+	}
+
+	// Same darker submenu tone as the expanded #adminmenu .wp-submenu rule
+	// above — this covers the hover-revealed flyout specifically (folded
+	// menu, or a submenu peeking out on hover without being "opened").
+	#adminmenu li a.wp-has-submenu:hover + .wp-submenu,
+	#adminmenu li.opensub .wp-submenu {
+		background: var(--om-menu-submenu-bg);
+	}
+
+	#adminmenu .awaiting-mod,
+	#adminmenu .update-plugins,
+	#sidebar-menu .awaiting-mod {
+		background: var(--om-menu-bubble-bg);
+		color: var(--om-menu-bubble-text);
+	}
+
+	// admin-menu.css's `li.current a .awaiting-mod` / `li a.wp-has-current-submenu
+	// .update-plugins` out-specify the rule above, so the bubble stays a
+	// hardcoded red/white on the current/active menu item without this.
+	#adminmenu li.current a .awaiting-mod,
+	#adminmenu li a.wp-has-current-submenu .update-plugins {
+		background: var(--om-menu-bubble-bg);
+		color: var(--om-menu-bubble-text);
+	}
+
+	#collapse-button,
+	#collapse-button:focus,
+	#collapse-button:active {
+		color: var(--om-menu-text);
+	}
+
+	#collapse-menu:hover #collapse-button,
+	#collapse-button:hover {
+		color: var(--om-menu-hover-text);
+	}
+
+	#adminmenu .wp-menu-separator {
+		background: var(--om-menu-bg);
+	}
+
+	// Folded (collapsed) menu's flyout submenu — same darker tone as the
+	// expanded state.
+	.folded #adminmenu .wp-submenu {
+		background: var(--om-menu-submenu-bg);
+	}
+
+	// -------------------------------------------------- //
+	// Cards / postboxes / tables / meta boxes             //
+	// -------------------------------------------------- //
+	.postbox,
+	.stuffbox,
+	.wrap .card,
+	#wpbody-content .metabox-holder .postbox {
+		background: var(--om-box-bg);
+		border: 1px solid var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	// common.css groups these 8 (plus a few not themed here, like
+	// .manage-menus, that don't come up elsewhere in this file) into one
+	// shared "card" background+border rule — same treatment as postboxes.
+	// `.stuffbox` is already covered above; repeating it here is harmless
+	// (same value) and keeps this list matching core's own grouping.
+	table.widefat,
+	.stuffbox,
+	p.popular-tags,
+	.widgets-holder-wrap,
+	.wp-editor-container,
+	.popular-tags,
+	.feature-filter,
+	.comment-ays {
+		background: var(--om-box-bg);
+		border-color: var(--om-box-border);
+	}
+
+	// common.css's `.stuffbox .hndle` (legacy `<h3 class="hndle">` metaboxes)
+	// out-specifies `.stuffbox > h3` above on border-bottom — include it too.
+	.postbox .hndle,
+	.postbox .postbox-header,
+	.stuffbox > h3,
+	.stuffbox .hndle {
+		border-bottom: 1px solid var(--om-box-border);
+		color: var(--om-heading-color);
+	}
+
+	// Background goes on table/tbody only — NOT on td/th directly. Cell
+	// backgrounds paint on top of row/row-group backgrounds, so a
+	// background set here would blot out the alternating-row stripe
+	// below (that was a real regression: an earlier version of this rule
+	// put `background` on td/th too, which is why striping disappeared).
+	// common.css's `.widefat { background: #fff; }` (WP list tables always
+	// also carry the `widefat` class) left this unthemed — same "elevated
+	// card" tone as postboxes, matching how core's own Default scheme
+	// doesn't tint table rows any differently from its cards either.
+	table.wp-list-table,
+	.wp-list-table tbody {
+		background: var(--om-box-bg);
+	}
+
+	table.wp-list-table,
+	.wp-list-table tbody,
+	.wp-list-table td,
+	.wp-list-table th {
+		border-color: var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	// Core never actually sets a background on thead/tfoot th/td in any of
+	// its own color schemes — a list table's header sits at the exact same
+	// color as the surrounding document (`body`), not a distinct shade.
+	// That zero delta is what gives core's tables their soft, flat feel;
+	// matching it here (`--om-body-bg`, not a separate token) instead of
+	// inventing a harsher, more visible header tone is what carries that
+	// same softness into every scheme, including dark. common.css's
+	// `.widefat thead tr th/td` / `.widefat tfoot tr th/td` (WP list tables
+	// always also carry the `widefat` class) separately out-specify the
+	// plain `.wp-list-table th/td` color rule below for header/footer
+	// cells — handled further down, in the list-table "chrome" section.
+	.wp-list-table thead th,
+	.wp-list-table thead td,
+	.wp-list-table tfoot th,
+	.wp-list-table tfoot td {
+		background: var(--om-body-bg);
+	}
+
+	// common.css's `.striped > tbody > :nth-child(odd), ul.striped > :nth-child(odd),
+	// .alternate` hardcodes a light-grey zebra stripe (#f6f7f7) regardless of
+	// scheme — in Light mode that value is nearly identical to our own
+	// `--om-body-bg` (#F7F7F7), which is what gives light-mode list tables
+	// their contrast: odd rows read as "page background showing through",
+	// even rows as the card/box surface. Reuse `--om-body-bg` here (rather
+	// than a third, table-specific tone) to carry that same relationship
+	// into every scheme instead of reinventing it in dark.
+	.striped > tbody > :nth-child(odd),
+	ul.striped > :nth-child(odd),
+	.alternate {
+		background-color: var(--om-body-bg);
+	}
+
+	// common.css's `.widefat thead th/td` / `.widefat tfoot th/td` (WP list
+	// tables always also carry the `widefat` class) out-specify the plain
+	// `.wp-list-table th/td` border-color rule above for header/footer cells.
+	.wp-list-table thead th,
+	.wp-list-table thead td,
+	.wp-list-table tfoot th,
+	.wp-list-table tfoot td {
+		border-color: var(--om-box-border);
+	}
+
+	// common.css's `.striped > tbody > :nth-child(odd)` / `.alternate`
+	// hardcodes a light grey (#f6f7f7) regardless of scheme — a distinct,
+	// subtler tone than the hover highlight below, not reused from it, so
+	// hovering a striped row still reads differently from just seeing it.
+	.striped > tbody > :nth-child(odd),
+	.wp-list-table .alternate,
+	body.wp-admin .striped > tbody > :nth-child(odd),
+	body.wp-admin .wp-list-table .alternate {
+		background-color: var(--om-table-row-alt-bg);
+	}
+
+	.wp-list-table tbody tr:hover {
+		background: var(--om-table-row-hover-bg);
+	}
+
+	// common.css's `.widefat thead tr th/td, .widefat tfoot tr th/td` is a
+	// *more* specific variant than the `.widefat thead th/td` rule already
+	// beaten above, and hardcodes text color separately — out-specifies our
+	// plain `.wp-list-table th` color rule too.
+	.widefat thead tr th,
+	.widefat thead tr td,
+	.widefat tfoot tr th,
+	.widefat tfoot tr td {
+		color: var(--om-body-text);
+	}
+
+	// common.css's `.ac_match` (autocomplete matched-substring highlight,
+	// e.g. tag/category suggestions) and `.subsubsub a.current` (the
+	// selected filter in a list table's "All | Mine | Published" links)
+	// both hardcode `color: #000` — out-specifies our plain `a` rule.
+	// stylelint-disable-next-line selector-class-pattern -- .ac_match is WP core's own class name, not ours to rename
+	.ac_match,
+	.subsubsub a.current {
+		color: var(--om-heading-color);
+	}
+
+	// list-tables.css's `th .comment-grey-bubble::before` (the Comments
+	// column header icon) hardcodes a fixed grey (`#3c434a`, ~8.8:1 on
+	// core's own document background) regardless of scheme, and as a
+	// pseudo-element it out-specifies the generic `a:hover`/`a:focus` rule
+	// on the anchor wrapping it — so the icon never followed our link hover
+	// color, and the fixed grey read as near-invisible against a dark
+	// thead. `--om-chrome-strong-page` reproduces that same ~8.8:1 against
+	// this scheme's own header background — see _tokens.scss for the full
+	// set of "chrome-*" ratio-matched values used throughout this section.
+	th .comment-grey-bubble::before {
+		color: var(--om-chrome-strong-page);
+	}
+
+	th a:hover .comment-grey-bubble::before,
+	th a:focus .comment-grey-bubble::before {
+		color: var(--om-link-hover);
+	}
+
+	// -------------------------------------------------- //
+	// List tables — the row-level chrome list-tables.css  //
+	// adds on top of the base .wp-list-table rules above  //
+	// -------------------------------------------------- //
+	// Every color below is picked to reproduce the SAME contrast ratio
+	// core's own default scheme has for that exact element against its own
+	// background — not a literal recolor, and not forced into OM's brand
+	// hues (those are only a starting reference point). This is what keeps
+	// the list table screen's soft, low-key feel intact in every scheme,
+	// including dark, rather than everything reading as uniformly "muted"
+	// or uniformly "bold." See _tokens.scss's "chrome-*" tokens for the
+	// core value + ratio each one is derived from.
+
+	// `.row-actions` (core `#646970`, ~4.85:1 on box-bg).
+	.row-actions {
+		color: var(--om-chrome-muted);
+	}
+
+	// `#submitted-on, .submitted-on` (Comments timestamp; core `#50575e`,
+	// ~6.4:1 on box-bg — a shade darker/stronger than plain row-actions).
+	#submitted-on,
+	.submitted-on {
+		color: var(--om-chrome-muted-strong);
+	}
+
+	// `.subsubsub`, `.no-plugin-results` (core `#646970`, ~4.85:1 — same
+	// core value as row-actions, but these sit on the page/body background
+	// rather than inside a boxed row, so they need their own dark value).
+	.subsubsub,
+	.no-plugin-results {
+		color: var(--om-chrome-muted-page);
+	}
+
+	// list-tables.css's `.row-actions .network_only, .network_active`
+	// (the "Network Only" / "Network Active" plugin badge) hardcodes
+	// `color: #000` — invisible against a dark row. Left on heading-color:
+	// core's own ~18:1 is already in the same "maximally bold" register as
+	// our heading text, so no dedicated ratio-matched value is needed.
+	// stylelint-disable selector-class-pattern -- WP core's class names, not ours to rename
+	.row-actions .network_only,
+	.row-actions .network_active {
+		color: var(--om-heading-color);
+	}
+	// stylelint-enable selector-class-pattern
+
+	// Sorting-arrow icon. Unsorted state, and the sorted column's own
+	// indicator dimming on hover, both use core's `#a7aaad` (~2:1 on
+	// document bg) — the same soft tier as the view-switch icons below, so
+	// they share `--om-chrome-faint`. The *sorted* state (`#1d2327`,
+	// ~13.9:1) and the opposite-direction indicator brightening on hover
+	// are both already in heading-color's "bold" register — left as-is.
+	.sorting-indicator::before {
+		color: var(--om-chrome-faint);
+	}
+
+	th.sorted.desc .sorting-indicator.desc::before,
+	th.sorted.asc .sorting-indicator.asc::before {
+		color: var(--om-heading-color);
+	}
+
+	th.sorted.asc a:focus .sorting-indicator.asc::before,
+	th.sorted.asc:hover .sorting-indicator.asc::before,
+	th.sorted.desc a:focus .sorting-indicator.desc::before,
+	th.sorted.desc:hover .sorting-indicator.desc::before {
+		color: var(--om-chrome-faint);
+	}
+
+	th.sorted.asc a:focus .sorting-indicator.desc::before,
+	th.sorted.asc:hover .sorting-indicator.desc::before,
+	th.sorted.desc a:focus .sorting-indicator.asc::before,
+	th.sorted.desc:hover .sorting-indicator.asc::before {
+		color: var(--om-heading-color);
+	}
+
+	// "Expand row" mobile-responsive toggle (core `#3c434a`, ~8.8:1 on
+	// box-bg) and "another user is editing this" lock icon (core
+	// `#8c8f94`, ~2.85:1 on box-bg) — two very different core ratios that
+	// happened to share a rule before; each now gets its matching tier.
+	.wp-list-table .toggle-row::before {
+		color: var(--om-chrome-strong-box);
+	}
+
+	.locked-indicator-icon::before {
+		color: var(--om-chrome-soft-box);
+	}
+
+	// List/Excerpt/Grid view-switch icons (Posts, Media, Plugins screens).
+	// Base (core `#c3c4c7`, ~1.5:1) joins the sorting-arrow's faint tier;
+	// hover (core `#787c82`, ~3.7:1) gets its own soft-on-page tier; the
+	// "current" state (core `#2271b1` — core's own accent blue, ~4.5:1)
+	// reuses this scheme's accent hue rather than a neutral grey, dimmed
+	// to match that same ratio instead of using full-strength link-color.
+	.view-switch a::before {
+		color: var(--om-chrome-faint);
+	}
+
+	.view-switch a:hover::before,
+	.view-switch a:focus::before {
+		color: var(--om-chrome-soft);
+	}
+
+	.view-switch a.current::before {
+		color: var(--om-chrome-accent-soft);
+	}
+
+	// -------------------------------------------------- //
+	// Plugins list table + Add Plugins cards              //
+	// -------------------------------------------------- //
+	// list-tables.css's `.plugins, .plugins th, .plugins td { color: #000 }`
+	// plus `.plugins tr { background: #fff }` hardcode the plugin row's box
+	// entirely, ignoring the scheme altogether — every row rendered as a
+	// stark white bar in OM Dark.
+	.plugins,
+	.plugins th,
+	.plugins td {
+		color: var(--om-body-text);
+	}
+
+	.plugins tr {
+		background: var(--om-box-bg);
+	}
+
+	// `.plugins tr.paused` (a plugin whose last run errored out) hardcodes
+	// a pale-yellow row tint, and `.error-display` hardcodes a black-alpha
+	// text wash meant to sit on that pale row — both assume a white page.
+	.plugins tr.paused th,
+	.plugins tr.paused td {
+		background-color: var(--om-table-row-hover-bg);
+	}
+
+	.plugins .paused .error-display p,
+	.plugins .paused .error-display code {
+		color: var(--om-body-text);
+	}
+
+	.plugins tr.paused th.check-column,
+	.plugin-update-tr.active td {
+		border-left-color: var(--om-error);
+	}
+
+	.plugins tr.paused .plugin-title,
+	.plugins .paused .dashicons-warning,
+	.plugins .resume-link,
+	.plugin-card .update-now::before {
+		color: var(--om-error);
+	}
+
+	// `.plugin-title .dashicons:before` is the placeholder icon shown when
+	// a plugin ships no icon of its own — a pale grey box that reads as a
+	// blown-out white square against a dark row. Core's own literal value
+	// here (`#f0f0f1`) is body-bg in all but name, so read that token
+	// directly rather than keep a near-duplicate.
+	.plugins .plugin-title .dashicons::before {
+		background-color: var(--om-body-bg);
+		color: var(--om-box-border);
+	}
+
+	// Add Plugins screen's plugin-card grid — same "hardcoded white box"
+	// issue as the plugins list table above.
+	.plugin-card {
+		background-color: var(--om-box-bg);
+		border-color: var(--om-box-border);
+	}
+
+	.plugin-card-bottom {
+		background-color: var(--om-body-bg);
+	}
+
+	// Core `#3c434a` on the plugin-card's white box, ~10:1 — the same
+	// "strong" register as the toggle-row icon, not a muted tone.
+	.plugin-card .column-compatibility span::before {
+		color: var(--om-chrome-strong-box);
+	}
+
+	.plugin-card .column-compatibility .compatibility-incompatible::before {
+		color: var(--om-error);
+	}
+
+	.plugin-card .column-compatibility .compatibility-compatible::before {
+		color: var(--om-success);
+	}
+
+	// -------------------------------------------------- //
+	// Comments list table                                 //
+	// -------------------------------------------------- //
+	#the-comment-list .unapproved th,
+	#the-comment-list .unapproved td {
+		background-color: var(--om-table-row-hover-bg);
+	}
+
+	#the-comment-list .unapproved th.check-column {
+		border-left-color: var(--om-warning);
+	}
+
+	#the-comment-list .approve a {
+		color: var(--om-success);
+	}
+
+	#the-comment-list .unapprove a {
+		color: var(--om-warning);
+	}
+
+	// The mobile-responsive comment-count-pending text variant (the
+	// circular badge variant elsewhere is self-contained on its own
+	// hardcoded background/text pair, so it doesn't need theming).
+	.column-response .post-com-count-pending,
+	.column-comments .post-com-count-pending,
+	.column-response .post-com-count-pending:hover,
+	.column-comments .post-com-count-pending:hover {
+		color: var(--om-error);
+	}
+
+	// -------------------------------------------------- //
+	// Multisite Sites list table                          //
+	// -------------------------------------------------- //
+	// list-tables.css hardcodes pale pink/yellow row tints for
+	// deleted/archived/spammed/mature sites, assuming a white table.
+	.wp-list-table .site-deleted,
+	.wp-list-table tr.site-deleted,
+	.wp-list-table .site-archived,
+	.wp-list-table tr.site-archived {
+		background: color-mix(in srgb, var(--om-error) 12%, var(--om-box-bg));
+	}
+
+	.wp-list-table .site-spammed,
+	.wp-list-table tr.site-spammed,
+	.wp-list-table .site-mature,
+	.wp-list-table tr.site-mature {
+		background: color-mix(in srgb, var(--om-warning) 12%, var(--om-box-bg));
+	}
+
+	// common.css's `.widefat ol/p/ul` (rendered inside cells with block
+	// content, e.g. plugin descriptions) — same body-text color as
+	// everything else in list tables.
+	.widefat ol,
+	.widefat p,
+	.widefat ul {
+		color: var(--om-body-text);
+	}
+
+	// common.css's plain `.widefat th/td { color: #50575e; }` is a
+	// DIFFERENT selector from `.wp-list-table th/td` above — not every
+	// `.widefat` table is also a `.wp-list-table` (e.g. some settings/data
+	// tables use `.widefat` on its own), so tables that only carry
+	// `.widefat` were falling through to this hardcoded core color
+	// entirely unopposed.
+	.widefat td,
+	.widefat th {
+		color: var(--om-body-text);
+	}
+
+	// The parenthetical item count next to each status filter (e.g.
+	// "Published (12)") is a separate, more muted color from the filter
+	// link's own text.
+	.subsubsub a .count,
+	.subsubsub a.current .count {
+		color: var(--om-body-text);
+	}
+
+	// edit.css's tag-suggest autocomplete dropdown reuses `.ac_match` for a
+	// different purpose (the highlighted suggestion row) with its own,
+	// more specific accent-fill rule — same "current/selected" treatment
+	// used elsewhere (e.g. .wp-core-ui .button:hover).
+	.ac_results .ac_over,
+	.ac_over .ac_match {
+		background-color: var(--om-menu-current-bg);
+		color: var(--om-menu-current-text);
+	}
+
+	// forms.css's `.form-table th, .form-wrap label` ties this rule's
+	// specificity, so which one wins depends on stylesheet load order —
+	// over-qualify with body.wp-admin to win outright instead of relying
+	// on it. `.form-wrap label` (term-add screens) gets the same treatment
+	// as `.form-table th` since core styles them identically.
+	.form-table th,
+	.form-wrap label,
+	body.wp-admin .form-table th,
+	body.wp-admin .form-wrap label {
+		color: var(--om-heading-color);
+	}
+
+	// edit.css's `p.description, .form-wrap p` (field help text) — same
+	// tie-breaking concern as above.
+	p.description,
+	.form-wrap p,
+	body.wp-admin p.description,
+	body.wp-admin .form-wrap p {
+		color: var(--om-body-text);
+	}
+
+	hr,
+	.wp-header-end {
+		border-color: var(--om-box-border);
+	}
+
+	// common.css hardcodes `#screen-meta { background-color: #fff; }` and
+	// `#screen-meta-links .show-settings { background: #fff; color: #646970; }`
+	// (the Screen Options / Help tabs and the panel they open) — unthemed,
+	// same stark-white problem as text inputs above.
+	#screen-meta,
+	#screen-meta-links .show-settings {
+		background: var(--om-box-bg);
+		border-color: var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	// `.show-settings:hover/:active/:focus` hardcodes `color: #2c3338`
+	// regardless of scheme.
+	#screen-meta-links .show-settings:hover,
+	#screen-meta-links .show-settings:active,
+	#screen-meta-links .show-settings:focus {
+		color: var(--om-heading-color);
+	}
+
+	// -------------------------------------------------- //
+	// Buttons                                             //
+	// -------------------------------------------------- //
+	// WP core's own color-scheme partial (wp-admin/css/colors/_admin.scss)
+	// deliberately declares `.button`/`.button-secondary` BEFORE
+	// `.button-primary`. WordPress markup gives a primary button BOTH
+	// classes at once (`class="button button-primary"`), and
+	// `.wp-core-ui .button-primary` / `.wp-core-ui .button` have IDENTICAL
+	// specificity (0,2,0), so for any property they both set, whichever
+	// rule is declared LAST in the stylesheet wins the tie — matching
+	// core's own order here (secondary first, primary last) is what makes
+	// that work. This happened once already: the blocks were in the
+	// opposite order before, and every primary button silently rendered
+	// with secondary's background/color.
+	.wp-core-ui .button,
+	.wp-core-ui .button-secondary {
+		background: var(--om-button-secondary-bg);
+		border-color: var(--om-button-secondary-border);
+		box-shadow: none;
+		color: var(--om-button-secondary-text);
+		text-shadow: none;
+	}
+
+	// `--om-menu-current-bg`/`--om-menu-current-text` are the strong accent
+	// blue reserved for the active nav item and `.button-primary`'s own
+	// resting state — reusing them here made a hovered/focused secondary
+	// button (a very common lingering state right after a click, e.g. after
+	// "Save Draft") visually indistinguishable from an unpressed primary
+	// button. Use the subtler row-hover tint instead, matching the family
+	// of hover treatments already used elsewhere in this file (e.g.
+	// `.color-option:hover`).
+	.wp-core-ui .button:hover,
+	.wp-core-ui .button-secondary:hover,
+	.wp-core-ui .button:focus,
+	.wp-core-ui .button-secondary:focus {
+		background: var(--om-table-row-hover-bg);
+		border-color: var(--om-focus-color);
+		color: var(--om-heading-color);
+	}
+
+	.wp-core-ui .button-primary {
+		background: var(--om-button-primary-bg);
+		border-color: var(--om-button-primary-bg);
+		box-shadow: none;
+		color: var(--om-button-primary-text);
+		text-shadow: none;
+	}
+
+	.wp-core-ui .button-primary:hover,
+	.wp-core-ui .button-primary:focus {
+		background: var(--om-button-primary-hover-bg);
+		border-color: var(--om-button-primary-hover-bg);
+		color: var(--om-button-primary-hover-text);
+	}
+
+	.wp-core-ui .button-primary:focus {
+		box-shadow: 0 0 0 1px var(--om-body-bg), 0 0 0 3px var(--om-focus-color);
+	}
+
+	// common.css's "Add New" button (`.page-title-action`, `.add-new-h2`
+	// is the deprecated pre-4.4 name for the same thing) is an outlined
+	// button using, in core's own words, "the standard color used for
+	// buttons" — i.e. the link/theme color, not a button-specific one —
+	// so this reuses --om-link-color/-hover rather than the button tokens.
+	.wrap .add-new-h2,
+	.wrap .add-new-h2:active,
+	.wrap .page-title-action,
+	.wrap .page-title-action:active {
+		border-color: var(--om-link-color);
+		color: var(--om-link-color);
+	}
+
+	// Core's hover/focus rules for this button are split across two
+	// selectors of different specificity (a low-specificity bare
+	// `.page-title-action:focus` for color, a `.wrap`-qualified one for
+	// border/box-shadow) — one rule here covers both cleanly. The focus
+	// ring itself (box-shadow) already comes from the generic `a:focus`
+	// rule elsewhere in this file, which uses `!important` and so wins
+	// regardless of specificity.
+	.wrap .add-new-h2:hover,
+	.wrap .page-title-action:hover,
+	.wrap .page-title-action:focus,
+	.page-title-action:focus {
+		border-color: var(--om-link-hover);
+		color: var(--om-link-hover);
+	}
+
+	// -------------------------------------------------- //
+	// Form controls                                       //
+	// -------------------------------------------------- //
+	// forms.css's base text-input/textarea rule hardcodes `background-color:
+	// #fff; color: #1e1e1e;` — unthemed, these stayed stark white regardless
+	// of scheme. Give them the same "elevated card" tone as postboxes/select
+	// for the same soft, off-white feel as core's own Default scheme. The
+	// body.wp-admin-prefixed variant exceeds forms.css's specificity outright
+	// (via :is(), rather than repeating this whole selector list twice) —
+	// same tie-breaking concern as elsewhere in this file.
+	// stylelint-disable-next-line @stylistic/max-line-length -- long by necessity, listing every text-like input type
+	$text-inputs: 'input[type="text"], input[type="password"], input[type="color"], input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="email"], input[type="month"], input[type="number"], input[type="search"], input[type="tel"], input[type="time"], input[type="url"], input[type="week"], textarea';
+	#{$text-inputs},
+	body.wp-admin :is(#{$text-inputs}) {
+		background-color: var(--om-box-bg);
+		border-color: var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	// No checked-state override needed here: forms.css's own
+	// `input[type=checkbox]:checked`/`input[type=radio]:checked` already
+	// read `var(--wp-admin-theme-color)` for both the fill and border, and
+	// the `:root` block up top already points that variable at
+	// `--om-link-color`.
+
+	// forms.css's plain `input[type=text], ..., textarea` rule hardcodes a
+	// white box/dark text regardless of scheme (unlike `select`, which the
+	// `.wp-core-ui` block below already themes) — left unthemed until now,
+	// these looked "blinding" against a dark surrounding page. Themed the
+	// same as `.wp-core-ui select` just below, for the same box look.
+	// Border uses `--om-field-border`, not `--om-box-border`: core itself
+	// draws a visibly stronger outline around interactive form controls
+	// (`#949494`, ~3:1 on white) than it does around purely structural
+	// dividers like postbox/table borders (`#c3c4c7`, ~1.6:1) — see
+	// `field-border` vs `box-border` in _tokens.scss.
+	input[type="text"],
+	input[type="password"],
+	input[type="date"],
+	input[type="datetime"],
+	input[type="datetime-local"],
+	input[type="email"],
+	input[type="month"],
+	input[type="number"],
+	input[type="search"],
+	input[type="tel"],
+	input[type="time"],
+	input[type="url"],
+	input[type="week"],
+	textarea {
+		background-color: var(--om-box-bg);
+		border-color: var(--om-field-border);
+		color: var(--om-body-text);
+	}
+
+	// forms.css bakes the dropdown-arrow SVG's fill into the same
+	// `background` shorthand as the box's fill color, so overriding only
+	// `background-color` (not `background-image`) leaves core's dark arrow
+	// in place.
+	.wp-core-ui select {
+		background-color: var(--om-box-bg);
+		background-image: var(--om-select-arrow-icon);
+		background-repeat: no-repeat;
+		border-color: var(--om-field-border);
+		color: var(--om-body-text);
+	}
+
+	// forms.css's `.wp-core-ui select:hover` hardcodes `color: #1e1e1e`
+	// regardless of scheme. Restore our text color and, matching how the
+	// other WP color schemes treat hover elsewhere, make the border color
+	// the primary visible change.
+	.wp-core-ui select:hover {
+		border-color: var(--om-focus-color);
+		color: var(--om-body-text);
+	}
+
+	// forms.css's `.wp-core-ui select:focus` *also* hardcodes `color: #1e1e1e`
+	// (separately from the plain `select:focus` rule that just sets the
+	// themed border/box-shadow), and out-specifies our base `.wp-core-ui
+	// select` rule above because of the added pseudo-class. Root cause of
+	// the "select text goes grey/unreadable after focusing" bug: focusing a
+	// select applies this hardcoded near-black text, which stays applied
+	// (and unreadable against a dark box-bg) until the value changes.
+	.wp-core-ui select:focus {
+		border-color: var(--om-focus-color);
+		color: var(--om-body-text);
+	}
+
+	// The Help panel's own tab list: common.css hardcodes the hover/active
+	// tab text color, and mixes the active tab's background with a literal
+	// `white` rather than anything theme-aware.
+	.contextual-help-tabs a:hover {
+		color: var(--om-heading-color);
+	}
+
+	.contextual-help-tabs .active {
+		background: var(--om-table-row-hover-bg);
+	}
+
+	.contextual-help-tabs .active a {
+		border-color: var(--om-box-border);
+		color: var(--om-heading-color);
+	}
+
+	// -------------------------------------------------- //
+	// Profile screen: Admin Color Scheme picker           //
+	// -------------------------------------------------- //
+	// forms.css's `.color-option:hover, .color-option.selected` hardcodes a
+	// light grey (#dcdcde) regardless of scheme, and ties this rule's
+	// specificity — over-qualify to guarantee the win rather than rely on
+	// load order.
+	.color-option:hover,
+	.color-option.selected,
+	body.wp-admin .color-option:hover,
+	body.wp-admin .color-option.selected {
+		background: var(--om-table-row-hover-bg);
+	}
+
+	// -------------------------------------------------- //
+	// Notices / status colors                             //
+	// -------------------------------------------------- //
+	.notice,
+	div.updated,
+	div.error {
+		background: var(--om-box-bg);
+		color: var(--om-body-text);
+	}
+
+	// common.css's `.notice p, .notice-title, div.updated p, div.error p,
+	// .form-table td .notice p` hardcodes `color: #1e1e1e` on the notice's
+	// own inner `<p>`/title — more specific than the rule above (which only
+	// reaches the `.notice`/`div.updated`/`div.error` container itself), so
+	// the actual visible text ignored `--om-body-text` entirely.
+	.notice p,
+	div.updated p,
+	div.error p,
+	.form-table td .notice p {
+		color: var(--om-body-text);
+	}
+
+	// `.notice-title` gets its own, slightly darker value in core
+	// (#1d2327 vs plain `.notice p`'s #1e1e1e) — same distinction as this
+	// file's own heading-vs-body-text tokens.
+	.notice-title {
+		color: var(--om-heading-color);
+	}
+
+	// common.css keeps the dismiss "X" button's icon a constant color
+	// across every state (hover/active/focus only add an opacity dim, not
+	// a color change) — one rule covers the button and all its `:before`
+	// glyph states.
+	.notice-dismiss,
+	.notice-dismiss::before,
+	.notice-dismiss:hover::before,
+	.notice-dismiss:active::before,
+	.notice-dismiss:focus::before {
+		color: var(--om-body-text);
+	}
+
+	.notice-success,
+	div.updated:not(.notice-error) {
+		border-left-color: var(--om-success);
+	}
+
+	.notice-warning {
+		border-left-color: var(--om-warning);
+	}
+
+	.notice-error,
+	div.error {
+		border-left-color: var(--om-error);
+	}
+
+	.notice-info {
+		border-left-color: var(--om-info);
+	}
+
+	// common.css's `abbr.required, span.required` out-specify plain `.required`
+	// (WP marks required-field markers as one of those two element+class pairs).
+	abbr.required,
+	span.required,
+	strong,
+	.required {
+		color: inherit;
+	}
+
+	.plugin-card .name,
+	.theme-browser .theme-name {
+		color: var(--om-heading-color);
+	}
+
+	// -------------------------------------------------- //
+	// Dashboard widgets                                   //
+	// -------------------------------------------------- //
+	// dashboard.css's Welcome panel grid wrapper hardcodes a white card
+	// background, same treatment as postboxes/inputs elsewhere.
+	.welcome-panel .welcome-panel-column-container {
+		background: var(--om-box-bg);
+		border-color: var(--om-box-border);
+	}
+
+	// "At a Glance"/Activity widget's Publishing Soon / Recently Published
+	// lists — base text color plus the same #f6f7f7 alternating-row tint
+	// used for list tables, reusing --om-table-row-alt-bg for consistency.
+	#future-posts li,
+	#published-posts li {
+		color: var(--om-body-text);
+	}
+
+	#future-posts li:nth-child(odd),
+	#published-posts li:nth-child(odd) {
+		background-color: var(--om-table-row-alt-bg);
+	}
+
+	// Activity widget's Recent Comments list — same #f6f7f7 tint as above.
+	#activity-widget #the-comment-list .comment-item {
+		background: var(--om-table-row-alt-bg);
+	}
+
+	// Activity widget's hairline dividers between entries.
+	.activity-block,
+	#dashboard_activity .subsubsub {
+		border-color: var(--om-box-border);
+	}
+
+	// dashboard.css's `#dashboard-widgets h3/h4` and Quick Draft's `.drafts
+	// h2` out-specify (ID beats the generic `h1, h2, h3` heading rule
+	// elsewhere in this file — an ID always wins over any number of
+	// classes) so widget titles stayed core's hardcoded dark grey. `h4`
+	// isn't covered by the generic rule at all regardless of context.
+	#dashboard-widgets h3,
+	#dashboard-widgets h4,
+	#dashboard_quick_press .drafts h2 {
+		color: var(--om-heading-color);
+	}
+
+	// Community Events widget.
+	.community-events .activity-block.last {
+		border-bottom-color: var(--om-box-border);
+	}
+
+	.community-events-footer {
+		border-top-color: var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	// -------------------------------------------------- //
+	// Media library                                       //
+	// -------------------------------------------------- //
+	// media-views.css's grid-view toolbar and common.css's `.wp-filter`
+	// (the search/filter bar above list tables and the media grid) both
+	// hardcode white backgrounds. The grid-view toolbar carries both
+	// `.media-toolbar` and `.wp-filter` classes at once, so both need
+	// theming — `.attachments-browser .media-toolbar` is more specific
+	// than plain `.wp-filter` and would otherwise win on that shared
+	// element.
+	.attachments-browser .media-toolbar,
+	.wp-filter {
+		background: var(--om-box-bg);
+	}
+
+	.wp-filter {
+		border-color: var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	// The rest of this section is the media-views.css/media.css modal
+	// itself — the whole thing is essentially "another card surface," so
+	// it reuses the same postbox/card tokens throughout rather than
+	// inventing modal-specific ones. `--om-box-bg-rgb`/`--om-error-rgb`
+	// exist solely for the couple of places core composites a translucent
+	// overlay with `rgba(var(--x--rgb), alpha)` instead of a flat color.
+
+	// Modal frame.
+	.media-modal-content {
+		background: var(--om-box-bg);
+	}
+
+	.media-modal-close {
+		color: var(--om-body-text);
+	}
+
+	// Top toolbar/menu (the left-hand "Upload files / Media Library" rail
+	// and the top tab-strip in views that use one, e.g. Insert Media).
+	.media-menu {
+		background: var(--om-box-bg);
+		border-right-color: var(--om-box-border);
+	}
+
+	.media-menu .active,
+	.media-menu .active:hover,
+	.media-router .active,
+	.media-router .active:hover {
+		color: var(--om-heading-color);
+	}
+
+	.media-menu .separator {
+		border-top-color: var(--om-box-border);
+	}
+
+	.media-router .active,
+	.media-router .media-menu-item.active:last-child {
+		background: var(--om-box-bg);
+		border-color: var(--om-box-border);
+	}
+
+	.media-menu .media-menu-item:hover {
+		background: var(--om-table-row-hover-bg);
+	}
+
+	// Narrow-viewport popover variant of .media-menu (@media max-width: 900px).
+	.media-frame:not(.hide-menu) .media-menu {
+		border-color: var(--om-box-border);
+	}
+
+	// Main content/grid area.
+	.media-frame-content {
+		background: var(--om-box-bg);
+		border-top-color: var(--om-box-border);
+	}
+
+	.wp-core-ui .attachment {
+		color: var(--om-body-text);
+	}
+
+	// The "no filename shown" caption overlay and the filename strip both
+	// composite a translucent white tint over the thumbnail — reuse
+	// --om-box-bg via its rgb-channel token rather than a flat color, so
+	// the thumbnail image still shows through slightly, same as core.
+	.wp-core-ui .attachment:not(:has(.filename))::after {
+		background-color: rgb(var(--om-box-bg-rgb), 0.8);
+		color: var(--om-heading-color);
+	}
+
+	.wp-core-ui .attachment .filename {
+		background: rgb(var(--om-box-bg-rgb), 0.8);
+	}
+
+	// Order matters here, same reason as the primary/secondary button fix
+	// above: WP's own JS puts BOTH `selected` and `details` classes on an
+	// attachment tile at once (checked AND open in the details view), and
+	// `.wp-core-ui .selected.attachment` / `.wp-core-ui .attachment.details`
+	// are exactly the same specificity (0,3,0) — core declares `.details`
+	// second so its accent-colored ring wins over the plain `.selected`
+	// ring; mirror that order here.
+	.wp-core-ui .selected.attachment {
+		box-shadow:
+			inset 0 0 0 5px var(--om-box-bg),
+			inset 0 0 0 7px var(--om-box-border);
+	}
+
+	.wp-core-ui .attachment.details {
+		box-shadow:
+			inset 0 0 0 3px var(--om-box-bg),
+			inset 0 0 0 7px var(--wp-admin-theme-color-darker-20, #183AD6);
+	}
+
+	.wp-core-ui .attachment-preview {
+		background: var(--om-box-bg);
+	}
+
+	.wp-core-ui .attachment-close {
+		background-color: var(--om-box-bg);
+	}
+
+	.wp-core-ui .attachment .check {
+		background: var(--om-box-bg);
+		box-shadow: 0 0 0 1px var(--om-box-bg), 0 0 0 2px rgb(0 0 0 / 15%);
+	}
+
+	.wp-core-ui .attachment.details .check,
+	.wp-core-ui .attachment.selected .check:focus,
+	.wp-core-ui .media-frame.mode-grid .attachment.selected .check {
+		box-shadow:
+			0 0 0 1px var(--om-box-bg),
+			0 0 0 2px var(--wp-admin-theme-color, #3858E9);
+	}
+
+	.attachments-browser .instructions {
+		color: var(--om-body-text);
+	}
+
+	.more-loaded .attachment:not(.found-media) {
+		background: var(--om-table-row-hover-bg);
+	}
+
+	.media-progress-bar {
+		background: var(--om-table-row-hover-bg);
+	}
+
+	// Grid-mode variant (the standalone Media Library grid page,
+	// upload.php) — same `.selected`/`.details` markup and ordering
+	// requirement as above, but the ring sits on the admin *page*
+	// background rather than a card, since the grid renders directly on
+	// the page there.
+	.media-frame.mode-grid .selected.attachment {
+		box-shadow:
+			inset 0 0 0 5px var(--om-body-bg),
+			inset 0 0 0 7px var(--om-box-border);
+	}
+
+	.media-frame.mode-grid .attachment.details {
+		box-shadow:
+			inset 0 0 0 3px var(--om-body-bg),
+			inset 0 0 0 7px var(--wp-admin-theme-color, #3858E9);
+	}
+
+	.media-frame.mode-grid .attachments-browser .no-media {
+		color: var(--om-body-text);
+	}
+
+	// Attachment-details sidebar (both the modal's right-hand panel and
+	// the Image Details view's left-hand settings panel — functionally
+	// the same "sidebar card" surface, different selectors per frame mode).
+	.media-sidebar,
+	.image-details .column-settings,
+	.edit-attachment-frame .attachment-info {
+		background: var(--om-box-bg);
+	}
+
+	.media-sidebar {
+		border-left-color: var(--om-box-border);
+	}
+
+	.image-details .column-settings {
+		border-right-color: var(--om-box-border);
+	}
+
+	.edit-attachment-frame .attachment-info {
+		border-left-color: var(--om-box-border);
+	}
+
+	.media-sidebar h2,
+	.image-details .media-embed h2,
+	.media-sidebar .setting .name,
+	.media-sidebar .setting .value,
+	.attachment-details .setting .name,
+	.attachment-details .setting .value,
+	.compat-item label span,
+	.attachment-info,
+	.attachment-info .filename,
+	.image-details .advanced-toggle,
+	.image-details .advanced-toggle:hover,
+	.image-details .advanced-toggle:active,
+	.media-embed .setting span,
+	.media-embed .setting .name,
+	.setting-group .name,
+	.edit-attachment-frame .attachment-info .filename {
+		color: var(--om-body-text);
+	}
+
+	.image-details .column-settings h2 {
+		border-top-color: var(--om-box-border);
+		color: var(--om-heading-color);
+	}
+
+	.attachment-info {
+		border-bottom-color: var(--om-box-border);
+	}
+
+	.edit-attachment-frame .attachment-info .details,
+	.edit-attachment-frame .attachment-info .settings {
+		border-bottom-color: var(--om-box-border);
+	}
+
+	.media-sidebar .copy-to-clipboard-container .success,
+	.attachment-details .copy-to-clipboard-container .success,
+	.copy-to-clipboard-container .success {
+		color: var(--om-success);
+	}
+
+	// _admin.scss's own equivalent rule darkens these on :hover/:focus
+	// (`color.adjust($alert-red, $lightness: -10%)`) rather than reusing
+	// the same value — simplified to reusing --om-error for both states
+	// rather than introducing a dedicated "darker error" token for this
+	// one narrow case.
+	.media-modal .delete-attachment,
+	.media-modal .trash-attachment,
+	.media-modal .untrash-attachment,
+	.media-modal .delete-attachment:hover,
+	.media-modal .trash-attachment:hover,
+	.media-modal .untrash-attachment:hover,
+	.media-modal .delete-attachment:focus,
+	.media-modal .trash-attachment:focus,
+	.media-modal .untrash-attachment:focus {
+		color: var(--om-error);
+	}
+
+	// upload.php's error-state sidebar (shown when an attachment fails to
+	// process) keeps its red border-left as-is — that's a semantic error
+	// flag, not something that needs to change per scheme.
+	.upload-php .mode-grid .media-sidebar {
+		background-color: var(--om-box-bg);
+	}
+
+	// Bottom toolbar/footer — a structurally separate element from the
+	// grid's own top toolbar covered above, never the same element, so no
+	// specificity tie between the two rules.
+	.media-frame-toolbar .media-toolbar {
+		background: var(--om-box-bg);
+		border-top-color: var(--om-box-border);
+	}
+
+	.media-selection .button-link {
+		border-right-color: var(--om-box-border);
+	}
+
+	.selection-info .clear-selection {
+		color: var(--om-error);
+	}
+
+	// Fades the selected-attachments filmstrip into the toolbar behind
+	// it — the opaque stop needs to match --om-box-bg; the transparent
+	// stop doesn't need a hue since its alpha is already 0.
+	.media-selection::after {
+		background-image: linear-gradient(to left, var(--om-box-bg), transparent);
+		background-repeat: no-repeat;
+	}
+
+	// Uploader/dropzone.
+	.drag-drop #drag-drop-area,
+	.media-frame.mode-grid .uploader-inline {
+		border-color: var(--om-box-border);
+	}
+
+	.drag-drop.drag-over #drag-drop-area {
+		border-color: var(--om-focus-color);
+	}
+
+	.uploader-inline .close::before,
+	.uploader-inline .has-upload-message .upload-instructions {
+		color: var(--om-body-text);
+	}
+
+	.upload-errors .upload-error {
+		background: var(--om-box-bg);
+	}
+
+	.uploader-inline .upload-errors .upload-error {
+		background-color: rgb(var(--om-error-rgb), 0.12);
+	}
+
+	// The full-page drag-and-drop overlay reads `--wp-admin-theme-color--rgb`
+	// as a 90%-opaque FILL, with white text/border drawn on top. That
+	// variable is already remapped to our accent above, but the accent is
+	// tuned for TEXT contrast, not for standing in as a near-solid fill —
+	// using it that way risked washing out the white overlay text.
+	// Overriding with --om-box-bg keeps this looking like every other
+	// "card" surface in the modal and keeps the white text/border legible
+	// regardless of scheme.
+	.uploader-window,
+	.wp-editor-wrap .uploader-editor.droppable {
+		background-color: rgb(var(--om-box-bg-rgb), 0.9);
+	}
+
+	// Image editor / crop tool.
+	.media-modal .imgedit-group-top h2,
+	.media-modal .imgedit-group-top h2 .button-link,
+	.media-modal .imgedit-group-top h2 a,
+	.media-disabled,
+	.image-editor .disabled {
+		color: var(--om-body-text);
+	}
+
+	.imgedit-wait,
+	.imgedit-popup-menu {
+		background: var(--om-box-bg);
+	}
+
+	.imgedit-menu .button.disabled {
+		background: var(--om-box-bg);
+		border-color: var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	.imgedit-scale-warn {
+		color: var(--om-warning);
+	}
+
+	// Placeholder text in every field inside the modal (search box,
+	// sidebar Alt Text/Caption/Description, embed-from-URL) — hardcoded,
+	// with no existing placeholder theming anywhere else in this file.
+	.media-frame ::placeholder {
+		color: var(--om-body-text);
+		opacity: 1;
+	}
+
+	// common.css's `.media-frame a.button`/`a.button-primary` out-specify
+	// this file's generic `.wp-core-ui .button`/`.button-primary` rules
+	// (extra `.media-frame` class), so any anchor-styled button a plugin
+	// renders inside the modal would otherwise keep core's hardcoded text
+	// color. Not confirmed to trigger on any core-rendered button today
+	// (WP's own toolbar buttons are all real <button> elements), but
+	// closing the gap defensively since third-party code does sometimes
+	// render one.
+	.media-frame a.button {
+		color: var(--om-button-secondary-text);
+	}
+
+	.media-frame a.button-primary {
+		color: var(--om-button-primary-text);
+	}
+
+	// -------------------------------------------------- //
+	// Theme / Plugin File Editor                          //
+	// -------------------------------------------------- //
+	// common.css's `#templateside > ul` (the file list sidebar) hardcodes
+	// a light grey background. `border-color` (not the `border`/
+	// `border-left` shorthands core uses) covers both the base rule and
+	// its @media (max-width: 782px) variant, which re-sets `border-left`
+	// with the same hardcoded color.
+	#templateside > ul {
+		background-color: var(--om-box-bg);
+		border-color: var(--om-box-border);
+	}
+
+	// -------------------------------------------------- //
+	// Health Check / Privacy Settings screens             //
+	// -------------------------------------------------- //
+	.health-check-header,
+	.privacy-settings-header {
+		background: var(--om-box-bg);
+		border-bottom-color: var(--om-box-border);
+	}
+
+	.privacy-settings-accordion-trigger,
+	.health-check-accordion-trigger {
+		background: var(--om-box-bg);
+		color: var(--om-body-text);
+	}
+
+	.privacy-settings-accordion-trigger:hover,
+	.privacy-settings-accordion-trigger:active,
+	.health-check-accordion-trigger:hover,
+	.health-check-accordion-trigger:active {
+		background: var(--om-table-row-hover-bg);
+	}
+
+	.privacy-settings-accordion-trigger:focus,
+	.health-check-accordion-trigger:focus {
+		color: var(--om-heading-color);
+	}
+
+	// The small status pill inside each trigger (e.g. "Critical",
+	// "Recommended") hardcodes dark-grey text — unreadable once the
+	// trigger's own background went dark above. Its color-coded
+	// `.badge.blue/orange/red/green/purple/gray` border variants are left
+	// alone deliberately, same reasoning as not touching the notice status
+	// colors: they're meant to stay their semantic color regardless of
+	// scheme, only the base text color needed theming.
+	.health-check-accordion-trigger .badge,
+	.privacy-settings-accordion-trigger .badge {
+		color: var(--om-body-text);
+	}
+
+	// The expanded panel content under each accordion trigger — same
+	// hardcoded white background as the trigger itself had.
+	.health-check-accordion-panel,
+	.privacy-settings-accordion-panel {
+		background: var(--om-box-bg);
+	}
+
+	// -------------------------------------------------- //
+	// Login screen touch (branding carries through)       //
+	// -------------------------------------------------- //
+	body.login {
+		background: var(--om-body-bg);
+	}
+
+	body.login #login h1 a {
+		// stylelint-disable-next-line defensive-css/require-background-repeat -- clears the image, nothing to repeat
+		background-image: none;
+	}
+
+	.login #backtoblog a,
+	.login #nav a {
+		color: var(--om-link-color);
+	}
+
+	.login #backtoblog a:hover,
+	.login #nav a:hover {
+		color: var(--om-link-hover);
+	}
+
+	// login.css's `#nav a:focus, #backtoblog a:focus, h1 a:focus` out-specifies
+	// the generic `a:focus` rule above, so keyboard focus fell back to WP's
+	// own focus color instead of following the hover color here.
+	.login #backtoblog a:focus,
+	.login #nav a:focus {
+		color: var(--om-link-hover);
+	}
+
+	.login .button-primary {
+		background: var(--om-button-primary-bg);
+		border-color: var(--om-button-primary-bg);
+		box-shadow: none;
+		color: var(--om-button-primary-text);
+		text-shadow: none;
+	}
+
+	.login .button-primary:hover,
+	.login .button-primary:focus {
+		background: var(--om-button-primary-hover-bg);
+		border-color: var(--om-button-primary-hover-bg);
+		color: var(--om-button-primary-hover-text);
+	}
+
+	// -------------------------------------------------- //
+	// Editor brightness-warning modal                     //
+	// -------------------------------------------------- //
+	// This is OUR OWN markup (js/editor-brightness-warning.js), not a core
+	// override — the block editor can't be meaningfully dark-themed, so
+	// this modal warns before navigating there instead. Buttons inside it
+	// deliberately use plain `.button`/`.button-primary` (no extra wrapper
+	// class) so they pick up the `.wp-core-ui .button`/`.button-primary`
+	// rules already themed above for free — every wp-admin `<body>` always
+	// carries the `wp-core-ui` class.
+	.om-editor-warning-modal {
+		align-items: center;
+		display: flex;
+		flex-wrap: wrap;
+		inset: 0;
+		justify-content: center;
+		position: fixed;
+		z-index: 100100; // above #wpadminbar's 99999
+	}
+
+	.om-editor-warning-modal[hidden] {
+		display: none;
+	}
+
+	.om-editor-warning-modal__overlay {
+		background: rgb(0 0 0 / 50%);
+		inset: 0;
+		position: absolute;
+	}
+
+	.om-editor-warning-modal__dialog {
+		background: var(--om-box-bg);
+		border: 1px solid var(--om-box-border);
+		border-radius: 4px;
+		box-shadow: 0 4px 24px rgb(0 0 0 / 30%);
+		max-width: 420px;
+		padding: 24px;
+		position: relative;
+	}
+
+	.om-editor-warning-modal__dialog h2 {
+		color: var(--om-heading-color);
+		margin-top: 0;
+	}
+
+	.om-editor-warning-modal__dialog p {
+		color: var(--om-body-text);
+	}
+
+	.om-editor-warning-modal__checkbox {
+		align-items: center;
+		color: var(--om-body-text);
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-bottom: 20px;
+	}
+
+	.om-editor-warning-modal__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		justify-content: flex-end;
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"name": "om-devteam/om-admin-color-schemes",
+	"description": "Registers \"OM System\", \"OM Light\", and \"OM Dark\" WordPress admin color schemes based on OM Performance Marketers brand colors.",
+	"type": "wordpress-muplugin",
+	"license": "proprietary",
+	"authors": [
+		{
+			"name": "OM Performance Marketers"
+		}
+	],
+	"require": {
+		"php": ">=7.4"
+	}
+}

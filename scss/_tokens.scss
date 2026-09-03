@@ -1,0 +1,177 @@
+// OM Admin Color Schemes — color tokens.
+
+// Single source of truth for both the Light and Dark palettes. om-light.scss
+// and om-dark.scss each apply one map directly; om-system.scss applies both
+// (light as the default, dark inside a prefers-color-scheme query), so there
+// is no more hand-copying values between the three output files — see
+// _mixins.scss's om-root-vars() for how a map becomes a :root block.
+
+// Structural colors (page/box backgrounds, borders, body/heading text) are
+// deliberately NEUTRAL grey, not OM's brand navy — matched value-for-value
+// against WP core's own current default ("Modern") scheme so this plugin
+// keeps core's soft, low-key feel instead of reading as a heavier, more
+// "colored" surface. The admin menu + admin bar chrome are the one deliberate
+// exception — kept on OM's brand navy so the sidebar still reads as OM
+// branded. OM's brand palette otherwise is reserved for ACCENTS only: links,
+// focus rings, the primary button, and the current/active nav item — exactly
+// where core itself uses its own accent blue. Status colors (success/warning/
+// error/info) are a separate category — inherently colorful regardless of
+// brand, and already contrast-tuned per the "Color system" section of
+// CLAUDE.md.
+
+$light: (
+	// Page — values match WP core's own "Modern" (Default) scheme exactly:
+	// #f0f0f0 body, #fff boxes, #3c434a body text, #1d2327 headings.
+	body-bg: #F0F0F0,
+	body-text: #3C434A,
+	heading-color: #1D2327,
+	link-color: #037DB5, // darkened Light Blue — 4.5:1+ on white — ACCENT
+	link-color-rgb: "3, 125, 181", // link-color's channels, for rgba(var(--wp-admin-theme-color--rgb), alpha)
+	link-hover: #1D2327, // = heading-color — hover reverts to bold neutral, not a different accent shade
+	focus-color: #46C3FC, // ACCENT
+	// Admin menu — kept on OM's brand navy rather than core's neutral
+	// #1e1e1e; the sidebar is one place the brand identity stays.
+	menu-bg: #0D2132,
+	menu-submenu-bg: #081722, // deliberately darker than menu-bg, not lighter like core's own submenu
+	menu-text: #E1E1E1,
+	menu-icon: rgb(225 225 225 / 70%),
+	menu-hover-bg: #153652,
+	menu-hover-text: #FFFFFF,
+	menu-hover-icon: #FFFFFF,
+	menu-current-bg: #46C3FC, // ACCENT
+	menu-current-text: #0D2132, // navy, not white — OM's accent is lighter than core's; white here fails contrast
+	menu-current-icon: #0D2132,
+	menu-bubble-bg: #DB0B28, // status (danger), not brand
+	menu-bubble-text: #FFFFFF,
+	// Admin bar — same treatment as the admin menu.
+	adminbar-bg: #0D2132,
+	adminbar-text: #E1E1E1,
+	adminbar-hover-bg: #153652,
+	adminbar-hover-text: #46C3FC,
+	// Cards / tables — neutral, matching core's own hairline/field borders.
+	box-bg: #FFFFFF,
+	box-bg-rgb: "255, 255, 255", // box-bg's channels, for rgba(var(--om-box-bg-rgb), alpha) translucent overlays
+	box-border: #C3C4C7, // soft structural hairline — postboxes, tables, hr — core's own value, ~1.7:1 on box-bg
+	field-border: #949494, // stronger outline for inputs/selects — core's value, ~3:1 on box-bg
+	table-row-hover-bg: #F6F7F7, // core's own highlight tint (striped/paused/unapproved rows), ~1.07:1 on box-bg
+	table-row-alt-bg: #F6F7F7, // matches core's own alternating-row tint exactly
+	// List table "chrome" — row actions, sort arrows, view-switch icons,
+	// etc. Each is solved to reproduce the SAME contrast ratio core's own
+	// default scheme has for that exact element against its own
+	// background (see the comments beside each usage in _shared.scss),
+	// not picked for hue. That's what keeps the list table screen's soft
+	// feel consistent across every scheme instead of drifting harsher in
+	// dark. Named by ratio tier + the background it's solved against
+	// (-box = box-bg, -page = body-bg).
+	chrome-muted: #6D727A, // ~4.85:1 on box-bg — row-actions text
+	chrome-muted-strong: #5A5F65, // ~6.4:1 on box-bg — comments "submitted on" timestamp
+	chrome-muted-page: #696969, // ~4.85:1 on body-bg — subsubsub filters, "no items" empty states
+	chrome-faint: #B5B5B5, // ~1.8:1 on body-bg — unsorted sort arrow, view-switch base icon
+	chrome-soft: #7C7C7C, // ~3.7:1 on body-bg — view-switch hover icon
+	chrome-soft-box: #9599A0, // ~2.85:1 on box-bg — "locked by another user" icon
+	chrome-strong-box: #43474B, // ~9.4:1 on box-bg — mobile row-toggle icon, plugin-card compatibility icon
+	chrome-strong-page: #424242, // ~8.8:1 on body-bg — Comments column header icon
+	chrome-accent-soft: #0374A8, // ~4.5:1 on body-bg — view-switch "current" icon, ACCENT dimmed from link-color
+	// Buttons — primary is the intentional accent; secondary is neutral,
+	// matching every other structural box/border/text pairing above.
+	button-primary-bg: #46C3FC, // ACCENT
+	button-primary-text: #0D2132,
+	button-primary-hover-bg: #037DB5,
+	button-primary-hover-text: #FFFFFF,
+	button-secondary-bg: #FFFFFF,
+	button-secondary-text: #3C434A,
+	button-secondary-border: #C3C4C7,
+	// Forms — the dropdown-arrow SVG's fill is baked into the data URI
+	// (can't reference a CSS custom property from inside one), so it's
+	// duplicated here matching body-text rather than read via var().
+	select-arrow-icon: "url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%202%201-7%207-7-7%202-1z%22%20fill%3D%22%233C434A%22%2F%3E%3C%2Fsvg%3E')",
+	// Status — colored for meaning, not brand; left alone.
+	success: #1B8410,
+	warning: #B25900, // darkened Orange — 4.5:1+ on white
+	error: #DB0B28, // darkened Red — 4.5:1+ on white
+	error-rgb: "219, 11, 40", // error's channels, for rgba(var(--om-error-rgb), alpha) tinted backgrounds
+	info: #037DB5,
+);
+
+// Dark deliberately doesn't mirror Light's navy-brand palette 1:1 outside the
+// sidebar — the goal is to match WP core's own "Default" scheme's soft/
+// neutral/airy *feel* (soft near-black chrome, neutral mid-dark page
+// background, a lighter "elevated card" tone for postboxes, soft muted
+// borders, off-white rather than pure-white text) inverted to dark, with
+// OM's brand Light Blue carried through as the one accent color — same role
+// it plays in Light mode, and the same way Default leans on a single accent
+// (`--wp-admin-theme-color`) for links/buttons/current-menu-item rather than
+// a moodier all-navy chrome+content treatment. The admin menu + admin bar
+// stay on this same soft near-black chrome (not brand navy) in dark — unlike
+// Light, where the sidebar is the one place brand identity stays, a navy
+// sidebar against a near-black page reads as two clashing surfaces rather
+// than one cohesive dark UI. All pairings here are re-verified for 4.5:1+ AA
+// (most well above); the low-contrast pairs (box-border vs box-bg,
+// menu-hover-bg vs menu-bg, box-bg vs body-bg) are deliberately soft/subtle,
+// matching how WP core itself treats hairline borders — see the "Color
+// system" section of CLAUDE.md.
+$dark: (
+	// Page
+	body-bg: #141414,
+	body-text: #D6D6D6, // ~10:1 on box-bg, matching core's own body-text ratio
+	heading-color: #FFFFFF,
+	link-color: #46C3FC, // full-strength Light Blue reads fine on dark neutral — ACCENT
+	link-color-rgb: "70, 195, 252", // link-color's channels, for rgba(var(--wp-admin-theme-color--rgb), alpha)
+	link-hover: #FFFFFF,
+	focus-color: #46C3FC, // ACCENT
+	// Admin menu — near-black neutral, echoing core Default's #1e1e1e chrome
+	// (see the note above $dark for why this departs from Light's navy).
+	menu-bg: #1A1A1A,
+	menu-submenu-bg: #0A0A0A, // deliberately darker than menu-bg, not lighter like core's own submenu
+	menu-text: #EDEDED,
+	menu-icon: rgb(237 237 237 / 70%),
+	menu-hover-bg: #2C2C2E, // soft, same tone family as adminbar-hover-bg below
+	menu-hover-text: #FFFFFF,
+	menu-hover-icon: #FFFFFF,
+	menu-current-bg: #46C3FC, // ACCENT
+	menu-current-text: #0D2132,
+	menu-current-icon: #0D2132,
+	menu-bubble-bg: #F41F3D, // status (danger), not brand
+	menu-bubble-text: #FFFFFF,
+	// Admin bar — same tone as the admin menu.
+	adminbar-bg: #1A1A1A,
+	adminbar-text: #EDEDED,
+	adminbar-hover-bg: #2C2C2E,
+	adminbar-hover-text: #46C3FC,
+	// Cards / tables — same ratios as $light, solved against this scheme's
+	// own neutral box-bg instead of the old, harsher navy.
+	box-bg: #292929, // ~1.15:1 on body-bg, matching core's own barely-there box/body delta
+	box-bg-rgb: "41, 41, 41", // box-bg's channels, for rgba(var(--om-box-bg-rgb), alpha) translucent overlays
+	box-border: #4E4E4E, // ~1.75:1 on box-bg
+	field-border: #727272, // ~3:1 on box-bg
+	table-row-hover-bg: #2E2E2E, // ~1.07:1 on box-bg
+	table-row-alt-bg: #313234, // subtler than hover, between body-bg and box-bg
+	// List table "chrome" — same ratios as the $light map above, solved
+	// against this scheme's own box-bg/body-bg instead of re-picked by eye.
+	chrome-muted: #959595, // ~4.85:1 on box-bg
+	chrome-muted-strong: #ACACAC, // ~6.4:1 on box-bg
+	chrome-muted-page: #838383, // ~4.85:1 on body-bg
+	chrome-faint: #414141, // ~1.8:1 on body-bg
+	chrome-soft: #6F6F6F, // ~3.7:1 on body-bg
+	chrome-soft-box: #6E6E6E, // ~2.85:1 on box-bg
+	chrome-strong-box: #D0D0D0, // ~9.4:1 on box-bg
+	chrome-strong-page: #B3B3B3, // ~8.8:1 on body-bg
+	chrome-accent-soft: #0386C1, // ~4.5:1 on body-bg — ACCENT, dimmed rather than full-strength link-color
+	// Buttons — hover keeps the same darkened-blue hue as Light's own
+	// link-color rather than jumping to a different hue for dark specifically.
+	button-primary-bg: #46C3FC, // ACCENT
+	button-primary-text: #0D2132,
+	button-primary-hover-bg: #037DB5,
+	button-primary-hover-text: #FFFFFF,
+	button-secondary-bg: #292929,
+	button-secondary-text: #D6D6D6,
+	button-secondary-border: #4E4E4E,
+	// Forms
+	select-arrow-icon: "url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%202%201-7%207-7-7%202-1z%22%20fill%3D%22%23D6D6D6%22%2F%3E%3C%2Fsvg%3E')",
+	// Status
+	success: #38E426,
+	warning: #FF850D,
+	error: #F86D81, // lightened Red — full-strength Red is <4.5:1 on navy
+	error-rgb: "248, 109, 129", // error's channels, for rgba(var(--om-error-rgb), alpha) tinted backgrounds
+	info: #46C3FC,
+);
