@@ -243,7 +243,7 @@ its own answer for, Composer-installed or not.
 The `om-devteam` vendor name is inferred from the `OM-DevTeam` GitHub org,
 not confirmed against any existing internal Composer-package naming
 convention — rename it here (and in the consuming site's `require`/
-`repositories` entries) if CSSLLC already has a different one.
+`repositories` entries) if your org already has a different one.
 
 ## PHP registration details
 
