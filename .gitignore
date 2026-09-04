@@ -1,7 +1,8 @@
 node_modules/
 
-# Compiled from scss/ by `npm run build` — never tracked. Releases are
-# built fresh from scss/ by .github/workflows/draft-release.yml and
-# shipped as a GitHub Release zip asset, not via committed CSS.
-/src/
+# src/*.css IS tracked (compiled from scss/ by `npm run build`, then
+# committed) — see CLAUDE.md's "Build (SCSS)" section for why: Composer has
+# no build-hook mechanism for installed dependencies, so the compiled CSS
+# has to already exist in whatever Composer fetches. Always run
+# `npm run build` and commit the result before tagging a release.
 /releases/

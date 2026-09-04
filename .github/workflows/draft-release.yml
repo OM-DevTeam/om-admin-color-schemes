@@ -8,6 +8,9 @@ on:
         description: "Version number"
         required: true
 
+permissions:
+  contents: write
+
 jobs:
 
   draft-new-release:
@@ -23,8 +26,39 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - name: "Set version"
+        run: sh dev/set-version.sh "${{ github.event.inputs.version }}"
+
       - run: npm run lint
       - run: npm run build
+
+      # src/*.css is committed (see CLAUDE.md's "Build (SCSS)" section),
+      # and the version bump above always changes at least
+      # om-admin-color-schemes.php — this is what stops a tagged release
+      # from silently shipping a stale plugin header or stale CSS if
+      # someone forgot to run dev/set-version.sh / npm run build locally
+      # before triggering a release. Nothing else in this job touches the
+      # working tree, so an unscoped `git diff` here only ever reflects
+      # the two steps above.
+      - name: "Commit version bump and CSS rebuild"
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -u
+            git commit -m "Release ${{ github.event.inputs.version }}"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+      # Tagged here, ourselves, via plain git — rather than letting
+      # action-gh-release below create the tag — so the tag always points
+      # at the (possibly just-amended) commit above, not whatever ref the
+      # workflow happened to start from.
+      - name: "Tag the release"
+        run: |
+          git tag "${{ github.event.inputs.version }}"
+          git push origin "${{ github.event.inputs.version }}"
 
       - name: "Create release artifact"
         run: sh dev/create-release-files.sh

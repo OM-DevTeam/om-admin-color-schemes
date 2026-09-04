@@ -123,7 +123,7 @@ class OM_Admin_Color_Schemes {
 				'scheme'  => $scheme,
 				'strings' => array(
 					'title'         => __( "This screen isn't dark-themed", 'om-admin-color-schemes' ),
-					'body'          => __( "The post editor doesn't support Dark Mode yet, so it always displays with a light background, no matter your OM Dark color scheme. If you'd like, now's a good time to turn down your screen's actual brightness before continuing.", 'om-admin-color-schemes' ),
+					'body'          => __( "The post editor doesn't support Dark Mode, so it always displays with a light background, no matter your OM Dark color scheme. If you'd like, now's a good time to turn down your screen's actual brightness before continuing.", 'om-admin-color-schemes' ),
 					'checkbox'      => __( "Don't warn me again", 'om-admin-color-schemes' ),
 					'continueLabel' => __( 'Continue to Editor', 'om-admin-color-schemes' ),
 					'cancel'        => __( 'Stay Here', 'om-admin-color-schemes' ),

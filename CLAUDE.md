@@ -70,10 +70,15 @@ composer.json                          Package metadata only (name, type,
                                         site's installer, not an autoloader;
                                         nothing here requires Composer to
                                         run PHP code from this repo. See
-                                        "Consuming the release zip via
-                                        Composer" below.
+                                        "Consuming this via Composer" below.
 
 dev/
+├── set-version.sh                     Updates the version in the PHP
+│                                       header + package.json/lock (via
+│                                       `npm version`). Doesn't commit,
+│                                       tag, or push — called by
+│                                       draft-release.yml, or run by hand
+│                                       to preview a version bump.
 └── create-release-files.sh            Assembles releases/mu-plugins/ (the
                                         loader + compiled src/*.css as
                                         siblings) and zips it. Called by
@@ -106,11 +111,18 @@ scss/                                  SOURCE. Hand-edit these, never src/*.css.
                                         again inside
                                         @media (prefers-color-scheme: dark).
 
-src/                                   COMPILED OUTPUT — gitignored, never
-├── om-light.css                       committed, never hand-edit. Exists
-├── om-dark.css                        locally only after `npm run build`
-└── om-system.css                      (or transiently during a release
-                                        build). No compiled om-shared.css:
+src/                                   COMPILED OUTPUT — tracked in git,
+├── om-light.css                       never hand-edit. Committed
+├── om-dark.css                        deliberately (not gitignored)
+└── om-system.css                      because Composer has no build-hook
+                                        mechanism for installed dependencies
+                                        — see "Build (SCSS)" below. Always
+                                        regenerate with `npm run build` and
+                                        commit the result before tagging a
+                                        release; a stale committed copy is
+                                        worse than none, since there's
+                                        nothing forcing it back in sync.
+                                        No compiled om-shared.css:
                                         _shared.scss is a partial inlined
                                         into each of the three files above
                                         at build time, so there's no extra
@@ -154,11 +166,15 @@ so several "defensive CSS" assumptions that fit a normal stylesheet don't
 apply — see `require-pure-selectors`, `require-focus-visible`, and
 `no-accidental-hover` in that file before re-enabling any of them).
 
-**`src/*.css` is never committed** — it's gitignored (see `.gitignore`).
-Run `npm run build`/`npm run watch` locally to produce it for local
-testing, but there's nothing to stage or commit; the compiled CSS only
-ever gets generated fresh, either on your machine or inside the release
-workflow below.
+**`src/*.css` IS committed** — deliberately, not an oversight. Composer has
+no equivalent of npm's `prepare`/`postinstall` build hooks for installed
+dependencies (it only ever runs scripts for the *root* project, never for
+a package it's installing), so anything Composer fetches for this package
+has to already contain working CSS — there's no build step it can trigger
+on install. Run `npm run build` after any SCSS change and commit the
+result **before** tagging a release, or the tagged commit ships stale
+CSS with no build process to catch the drift. `npm run watch` is still
+useful while iterating locally, just don't forget the final commit.
 
 ## Releases
 
@@ -168,9 +184,28 @@ the Actions tab (`workflow_dispatch`, takes a `version` input like
 [crstauf/query-monitor-extend](https://github.com/crstauf/query-monitor-extend)
 (`draft-release.yml` + `dev/create-release-files.sh`):
 
-1. `npm ci && npm run lint && npm run build` — fresh `src/*.css` from
-   current `scss/`.
-2. `dev/create-release-files.sh` assembles `releases/om-admin-color-schemes/`
+1. `npm ci`, then `dev/set-version.sh` updates the version in
+   `om-admin-color-schemes.php`'s header and (via `npm version
+   --no-git-tag-version`) `package.json`/`package-lock.json` — see
+   "File layout" above. `npm run lint && npm run build` follow, producing
+   fresh `src/*.css` from current `scss/`.
+2. **If any of that differs from what's already committed** (the version
+   bump always will, at minimum, unless re-running for a version already
+   released — the CSS rebuild might not, if nobody forgot to run it
+   locally), the workflow commits everything itself (as
+   `github-actions[bot]`, message `Release {version}`) and pushes that
+   commit to whichever branch the workflow was run against. This is what
+   stops a release from ever tagging a stale plugin-header version or
+   stale CSS just because someone forgot one of those two steps locally
+   before triggering a release. If nothing differs, this step is a no-op.
+3. The workflow tags that commit — the one the previous step may have
+   just pushed, not necessarily the one the workflow started from — as
+   the `version` input, via plain `git tag`/`git push`, before
+   `action-gh-release` (next step) ever runs. Tagging it directly like
+   this, ourselves, rather than leaving `action-gh-release` to create the
+   tag, is what guarantees the tag always points at a commit with the
+   correct version header and CSS.
+4. `dev/create-release-files.sh` assembles `releases/om-admin-color-schemes/`
    — the plugin's own folder, matching normal WordPress plugin zip
    conventions rather than pre-wrapping it in a `mu-plugins/` folder —
    containing `om-admin-color-schemes.php`, `src/*.css` and
@@ -178,9 +213,10 @@ the Actions tab (`workflow_dispatch`, takes a `version` input like
    relationships the PHP already expects via
    `plugin_dir_url( __FILE__ ) . 'src/'` / `'js/'`), and `README.md`. That
    folder is then zipped as-is into `releases/om-admin-color-schemes.zip`.
-3. `softprops/action-gh-release` publishes a **draft** GitHub Release
-   named after the version input, with that zip attached. Review the
-   draft and hit "Publish" manually — nothing goes live automatically.
+5. `softprops/action-gh-release` publishes a **draft** GitHub Release
+   attached to the tag from step 3, named after the version input, with
+   that zip attached. Review the draft and hit "Publish" manually —
+   nothing goes live automatically.
 
 The zip is a normal single-plugin-folder zip; it does **not** unzip
 directly into a working state inside `wp-content/mu-plugins/`. mu-plugins
@@ -195,50 +231,56 @@ end users. This mirrors the local dev symlink's purpose (getting a
 nested loader to actually execute), just via a `require` instead of a
 symlink on the destination site.
 
-**Consuming the release zip via Composer — decided.** No private
-Packagist/Satis instance; a consuming site points a `"package"`-type
-repository entry directly at a specific release's zip asset instead. This
-repo's own `composer.json` (added alongside this decision) just declares
-`"name": "om-devteam/om-admin-color-schemes"` and `"type":
-"wordpress-muplugin"` — that's metadata for whichever
-`composer/installers`-based install-path config the consuming site already
-uses, not something Composer resolves against automatically, since a
-`"package"` repository has no version-discovery mechanism of its own. The
-consuming site's own `composer.json` needs an entry shaped like this
-(bump the version/URL by hand for every new release — that manual edit is
-the actual cost of skipping a private Packagist/Satis instance):
+**Consuming this via Composer — decided, and simpler than the release zip
+suggests.** Earlier this required a hand-written `"package"`-type
+repository entry pointing at a specific release's zip asset, re-edited by
+hand for every new version, because `src/*.css` wasn't tracked and a
+plain `"vcs"` repository has no way to run a build step — Composer, via a
+GitHub-hosted VCS repository, fetches a given tag's `git archive` output
+directly (the same thing GitHub's own "Source code" download link
+produces), not a custom-built release asset. Now that `src/*.css` **is**
+committed (see "Build (SCSS)" above), that `git archive` output already
+contains everything the plugin needs, which means a plain `"vcs"`
+repository with a normal semver constraint just works — no manual
+per-version editing required. The consuming site's `composer.json` needs
+an entry shaped like this:
 
 ```json
 {
 	"repositories": [
 		{
-			"type": "package",
-			"package": {
-				"name": "om-devteam/om-admin-color-schemes",
-				"version": "1.1.0",
-				"type": "wordpress-muplugin",
-				"dist": {
-					"url": "https://github.com/OM-DevTeam/om-admin-color-schemes/releases/download/1.1.0/om-admin-color-schemes.zip",
-					"type": "zip"
-				}
-			}
+			"type": "vcs",
+			"url": "https://github.com/OM-DevTeam/om-admin-color-schemes"
 		}
 	],
 	"require": {
-		"om-devteam/om-admin-color-schemes": "1.1.0"
+		"om-devteam/om-admin-color-schemes": "^1.0"
 	}
 }
 ```
 
-The version string in that `dist.url` must exactly match the release's git
-tag — see the `tag_name` fix in `draft-release.yml` below; before that fix
-the workflow only set the release's display *name* from the `version`
-input, not its actual tag, so every draft release's tag silently fell back
-to the branch it was run from (`init`) instead of the version typed in.
-Also note this only solves *fetching* the zip — see the loader-shim gap
+`.gitattributes`' `export-ignore` rules are what keep that fetched archive
+down to just the runtime-necessary files (`om-admin-color-schemes.php`,
+`js/`, `src/*.css`, `README.md`, `composer.json`) rather than also
+shipping the SCSS source and every dev/build/lint tool — see the comment
+at the top of `.gitattributes` itself, and verify it any time you add a
+new dev-only top-level file (`git archive --worktree-attributes HEAD | tar
+-t` previews exactly what Composer/GitHub would fetch, without needing an
+actual tag).
+
+This only solves *fetching* the files, though — see the loader-shim gap
 noted just above (mu-plugins doesn't auto-load subdirectory `.php` files
 regardless of how they got there), which the consuming site still needs
-its own answer for, Composer-installed or not.
+its own answer for, Composer-installed or not. This repo does still ship
+two parallel distribution paths — the GitHub Release zip
+(`dev/create-release-files.sh`, for the manual-install README audience —
+it wraps content in a plain `om-admin-color-schemes/` folder name, unlike
+GitHub's own archive which names the folder
+`om-admin-color-schemes-{tag}/`) and the tagged commit itself (for the
+Composer/`vcs` audience above) — but they no longer risk drifting apart:
+the release workflow (see "Releases" below) builds fresh CSS once and
+commits it to the tag *before* building the zip from that same commit, so
+both paths always reflect the identical, current build.
 
 The `om-devteam` vendor name is inferred from the `OM-DevTeam` GitHub org,
 not confirmed against any existing internal Composer-package naming
@@ -274,12 +316,27 @@ file just calls `OM_Admin_Color_Schemes::init()` at the bottom). Structure:
 
 ## Editor brightness warning
 
-**The problem this solves is structural, not a theming gap**: the block
-editor's canvas (post.php?action=edit, post-new.php) is a
-WordPress-controlled iframe that always displays with a light background,
-regardless of admin color scheme — there's no realistic way to dark-theme
-it from an admin color-scheme plugin. Rather than let an OM Dark user get
-hit with that light-background flash with zero warning,
+**The problem this solves is structural, not a theming gap — and not for
+just one reason.** The block editor's canvas (post.php?action=edit,
+post-new.php) always displays with a light background, regardless of
+admin color scheme:
+
+- It deliberately mirrors whatever theme a given site actually has
+  active — that's the entire point of a WYSIWYG editor. Forcing OM's
+  dark palette in would fight against every different theme this plugin
+  might end up installed alongside, not one known theme to design
+  against.
+- Doing it properly would mean re-theming every block's own editor
+  styles — core blocks and every third-party block — individually,
+  which is an open-ended undertaking, not a fixed scope this file could
+  ever call "done."
+- Unlike the rest of wp-admin, the editor canvas isn't really "admin
+  chrome" in the first place — it's WordPress rendering a live preview of
+  front-end content, so a scheme registered via `wp_admin_css_color()`
+  has no clean hook into it to begin with.
+
+Rather than let an OM Dark user get hit with that light-background flash
+with zero warning,
 `js/editor-brightness-warning.js` intercepts clicks on links headed there
 and offers a chance to back out — or just turn down their screen's actual
 brightness — before navigating. Worth being precise about the two senses
@@ -881,20 +938,21 @@ than waiting for it to surface as a bug report.
 
 ## Known limitations / things worth testing in Claude Code
 
-- **OM Dark doesn't theme every screen/element yet**, and there's no
+- **OM Dark doesn't theme every screen/element**, and there's no
   general mechanism to tell the user when they've landed on one that
   merely *isn't themed yet* (as opposed to structurally can't be — see
   "Editor brightness warning" above for the one case that got its own
-  targeted fix). Text inputs/textarea, the Screen Options/Help tabs, and
-  list table rows were fixed (see "Color system" above); still open: a
-  `<select>`'s text can go grey/unreadable after focusing then blurring it
-  without choosing an option (not yet root-caused — likely another core
-  state variant like the `:focus`/`:hover` ones already fixed, this time
-  on blur). Rather than keep chasing every individual case one report at a
-  time, the plan is to build a way to flag un-themed screens/elements to
-  whoever's using OM Dark — not yet designed or built. If you pick this
-  up: decide whether "flag" means a visual indicator, a console warning,
-  an admin notice, or something else before writing code.
+  targeted fix). Text inputs/textarea, the Screen Options/Help tabs, list
+  table rows, and a `<select>`'s text going grey/unreadable after
+  focusing then blurring it without choosing an option were all fixed
+  (see "Color system" above — the select fix is the `.wp-core-ui
+  select:focus` rule in `_shared.scss`; confirmed resolved by live
+  testing, not just by inspection). Rather than keep chasing every
+  individual case one report at a time, the plan is to build a way to
+  flag un-themed screens/elements to whoever's using OM Dark — not yet
+  designed or built. If you pick this up: decide whether "flag" means a
+  visual indicator, a console warning, an admin notice, or something else
+  before writing code.
 - **Two open reports that couldn't be traced to a literal core selector**
   despite an exhaustive search of every relevant core CSS file (common.css,
   edit.css, dashboard.css, list-tables.css, site-health.css, all their
@@ -935,11 +993,14 @@ than waiting for it to surface as a bug report.
 - No automated tests. If you add any (e.g. a PHP unit test asserting all
   three `wp_admin_css_color()` keys register, or a visual regression tool
   against wp-admin), this is the natural place to wire them in.
-- WordPress reads `src/*.css` directly at runtime, but that folder is
-  never in this repo's git history — it only exists locally (via
-  `npm run build`) or transiently inside the release workflow (see
-  "Releases"). `node_modules/`, `src/`, and `releases/` are all
-  gitignored; everything else in the repo is tracked normally.
+- `src/*.css` is committed (see "Build (SCSS)" above). Nothing catches
+  drift between `scss/` and `src/*.css` on an ordinary commit/PR — only
+  the "Draft new release" workflow does, and only at release time (it
+  rebuilds and auto-commits any difference before tagging — see
+  "Releases" below). Day-to-day commits can still land with stale
+  compiled CSS; it just can't make it into a tagged release unnoticed.
+  `node_modules/` and `releases/` remain gitignored; everything else in
+  the repo is tracked.
 
 ## Conventions
 

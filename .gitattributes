@@ -1,14 +1,14 @@
-# NOT the release mechanism — see .github/workflows/draft-release.yml and
-# dev/create-release-files.sh for that (a hand-assembled zip attached to a
-# GitHub Release, since compiled src/*.css is never committed to begin
-# with — see CLAUDE.md's "Releases" section).
-#
-# This only trims dev-only files from GitHub's auto-generated "Download
-# ZIP" / release source archive, in case anyone grabs that by mistake
-# instead of the actual release asset. Since src/*.css isn't tracked,
-# that raw source archive was never installable as a plugin anyway.
+# src/*.css is tracked (see .gitignore), so GitHub's auto-generated tag/
+# release source archive — and, via a plain Composer "vcs" repository, the
+# archive Composer itself fetches for a given tag — is now a genuinely
+# installable copy of this plugin, not just a source checkout. These
+# export-ignore rules are what keep that archive down to just the files
+# the plugin actually needs at runtime (see the release zip's own file
+# list in dev/create-release-files.sh, which this mirrors) rather than
+# also dragging in the SCSS source and every dev/build/lint tool.
 
 /scss               export-ignore
+/dev                export-ignore
 /package.json       export-ignore
 /package-lock.json  export-ignore
 /.stylelintrc.cjs   export-ignore
