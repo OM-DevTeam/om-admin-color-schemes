@@ -42,10 +42,17 @@ om-admin-color-schemes.php             Loader mu-plugin. Defines the
                                         OM_Admin_Color_Schemes class, which
                                         registers the 3 schemes via
                                         wp_admin_css_color() on admin_init,
-                                        and conditionally enqueues
+                                        conditionally enqueues
                                         js/editor-brightness-warning.js on
-                                        admin_enqueue_scripts. Must end up
-                                        as a top-level file directly inside
+                                        admin_enqueue_scripts, syncs a
+                                        cookie on profile_update, and
+                                        enqueues a scheme stylesheet
+                                        directly on login_enqueue_scripts
+                                        — see "Login screen theming"
+                                        below for why that last one can't
+                                        just reuse wp_admin_css_color().
+                                        Must end up as a top-level file
+                                        directly inside
                                         wp-content/mu-plugins/ (mu-plugins
                                         only auto-loads top-level .php
                                         files, not files in subdirectories).
@@ -413,6 +420,105 @@ works for free without a separate button treatment. A minimal focus trap
 (Tab/Shift+Tab cycles within the dialog, Escape cancels, focus returns to
 the original trigger link on close) covers keyboard/screen-reader use
 without pulling in a dialog library for three focusable elements.
+
+## Login screen theming
+
+**WordPress's admin color scheme system never reaches wp-login.php at
+all** — confirmed by reading core directly (`wp-admin/css/colors/`,
+`wp-includes/script-loader.php`, `wp-login.php`), not assumed. None of
+the 8 built-in schemes' compiled CSS contains a single login-related
+selector, and the `colors` stylesheet handle (the one `wp_style_loader_src()`
+resolves to whichever scheme `get_user_option('admin_color')` names) is
+only ever enqueued from `wp-admin/admin-header.php` and two legacy
+media-iframe contexts — never from `wp-login.php`, which hardcodes an
+`admin-color-modern` body class regardless of any actual selection and
+enqueues its own separate `login` stylesheet handle instead. This applies
+equally to `om-*` schemes, registered the exact same way via
+`wp_admin_css_color()` — so the "Login screen touch" section that already
+existed in `_shared.scss` before this feature was added had never
+actually been served to a browser. It compiled without error and looked
+plausible on read-through, but nothing had ever requested that CSS on
+`wp-login.php`, because nothing ever enqueued it there.
+
+**The fix is two PHP hooks working together, since there's no user
+context at the login screen to read a preference from directly:**
+
+- `sync_login_scheme_cookie()`, hooked to `profile_update` (fires after a
+  save completes — not on every admin page load), writes
+  `LOGIN_SCHEME_COOKIE` (`om_admin_color_scheme`) whenever the *current*
+  user's own `admin_color` is one of ours, and deletes it the moment it
+  isn't — so switching to a core scheme doesn't leave a stale OM
+  preference silently theming the login screen later. Guarded to
+  `get_current_user_id() === (int) $user_id` specifically: `profile_update`
+  fires for anyone's profile save, including an admin editing someone
+  ELSE's `admin_color` — without that guard, the admin's own browser
+  would get a cookie based on a different user's change. Cookie
+  path/domain use `SITECOOKIEPATH`/`COOKIE_DOMAIN` (matching how WP's own
+  auth cookies are scoped, so it's readable on both `/wp-admin/` and
+  `/wp-login.php` regardless of subdirectory/multisite setup) and expire
+  at 400 days — the practical browser-enforced maximum regardless of what's
+  requested (Chrome clamps to this; others follow), which in practice
+  means an active user (someone who resaves their profile at least once
+  in any 400-day window) never actually sees it expire, since it's
+  rewritten on every save.
+- `enqueue_login_scheme_style()`, hooked to `login_enqueue_scripts`,
+  reads that cookie and `wp_enqueue_style()`s the matching `src/om-*.css`
+  directly — bypassing `wp_admin_css_color()`'s normal mechanism
+  entirely, since that mechanism simply never fires here. Falls back to
+  `om-system` (follows the browser/OS `prefers-color-scheme` live, same
+  as it does in wp-admin) for any visitor with no cookie at all: first
+  visit, cleared cookies, a different browser/device. Declares `'login'`
+  as a style dependency specifically so it loads *after* core's own
+  `login.css` — same declaration-order tie-breaking concern as the
+  button/notice fixes elsewhere in this file, since several of the
+  selectors below have identical specificity to core's own.
+
+**Trade-off, not a bug**: an existing OM-scheme user who never revisits
+their Profile screen again after this feature ships simply won't get the
+cookie set until they do — `profile_update` only fires on an actual save,
+not retroactively. Considered acceptable for what's explicitly scoped as
+polish/personal preference, not a fix for a reported problem; a
+`login_enqueue_scripts`-adjacent "write it opportunistically on any admin
+page load too" fallback was considered and deliberately left out to keep
+this to the one hook.
+
+**Once the stylesheet was actually going to load for real, the existing
+`_shared.scss` rules needed a real audit against core's `login.css`
+rather than continuing to trust rules that had never been checked against
+a live render** — two gaps would have looked actively broken, not just
+incomplete, so they were fixed as part of landing this feature rather
+than filed as a separate follow-up:
+
+- **`.login form`** (the actual login/lostpassword/resetpass box) —
+  login.css hardcodes `background: #fff; border: 1px solid #c3c4c7;`.
+  Without theming this, the page background would correctly go dark but
+  the box containing the actual form would stay a stark white square in
+  the middle of it — worse than the previous fully-unthemed state, not
+  better.
+- **`.login .message`/`.notice`/`.success`** — login.css hardcodes
+  `background-color: #fff` *and* `border-left: 4px solid #3858e9` (a
+  literal hex, not a variable) on the base rule, and `.success`/
+  `.notice-error` (a failed login attempt — the single most common
+  notice a visitor actually sees) each hardcode their own light pastel
+  background tint (`#eff9f1`/`#fcf0f0`) plus their own literal
+  border-left-color on top of that. Background uses the same
+  `color-mix()` tinting pattern already used for the Multisite Sites list
+  table elsewhere in this file; border-left-color maps to
+  `--om-info`/`--om-success`/`--om-error`, the same status tokens the
+  admin-side `.notice-info`/`.notice-success`/`.notice-error` fix
+  already uses — core's default/generic blue here plays the same "info"
+  role. The border-left-color half of this was missed in the first pass
+  (only background got fixed) and reported separately afterward — same
+  "background AND border, not just one" gap as the admin-side `.notice`
+  fix above, just not caught here the first time since nothing had ever
+  been visually checked live.
+
+Not otherwise audited beyond what's listed above (input field styling,
+the password-strength meter, the language switcher, `.privacy-policy-page-link`)
+— those weren't found broken on read-through against login.css, but
+weren't visually confirmed live either (this repo's session had no
+connected browser to check against at the time). Worth a real look before
+leaning on this further.
 
 ## Color system
 
@@ -997,10 +1103,15 @@ than waiting for it to surface as a bug report.
   menu hover/current states, submenu flyouts, the admin bar's "My Account"
   dropdown, list table hover, notice colors (success/warning/error), and
   the button states (primary/secondary, hover, focus).
-- No dark-mode-specific favicon/login-logo swap is included — only admin
-  chrome colors are themed. If OM wants a dark-mode logo variant on the
-  login screen, that's an additional `login_enqueue_scripts` hook, not yet
-  built.
+- No dark-mode-specific logo on the login screen — core's own gray "W"
+  logo (`w-logo-gray.png`/`wordpress-logo-gray.svg`) is left as-is,
+  unthemed, rather than hidden or swapped for a variant that suits dark
+  backgrounds better. Explicitly not hidden — a `background-image: none`
+  override existed briefly during development and was deliberately
+  removed. A `login_enqueue_scripts` hook already exists now (see "Login
+  screen theming" above, for the scheme stylesheet itself); a real logo
+  swap would extend that same hook, but needs an actual light-colored
+  logo asset this repo doesn't have yet.
 - Accessibility numbers above are computed against *solid* backgrounds
   only; anywhere a color sits on a gradient, image, or semi-transparent
   overlay wasn't re-verified.

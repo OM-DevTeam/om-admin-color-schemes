@@ -1510,13 +1510,57 @@
 	// -------------------------------------------------- //
 	// Login screen touch (branding carries through)       //
 	// -------------------------------------------------- //
+	// This whole section went un-rendered for a while — WordPress's admin
+	// color scheme system never reaches wp-login.php at all (core's own
+	// `colors` stylesheet is only ever enqueued from wp-admin contexts),
+	// so none of this ever actually loaded until the plugin started
+	// enqueuing its own stylesheet here directly (see
+	// enqueue_login_scheme_style() in the PHP loader). Re-verified
+	// against login.css directly once that landed, rather than trusting
+	// rules that had never been checked against a live render.
 	body.login {
 		background: var(--om-body-bg);
+		color: var(--om-body-text);
 	}
 
-	body.login #login h1 a {
-		// stylelint-disable-next-line defensive-css/require-background-repeat -- clears the image, nothing to repeat
-		background-image: none;
+	// login.css's `.login form` is the actual login/lostpassword/resetpass
+	// box — hardcodes `background: #fff; border: 1px solid #c3c4c7;`.
+	// Without this, the page background themes correctly but the box
+	// containing the actual form stays a stark white square in the
+	// middle of it, which reads far worse in Dark than doing nothing at
+	// all would have.
+	.login form {
+		background: var(--om-box-bg);
+		border-color: var(--om-box-border);
+	}
+
+	// login.css's `.login .message, .login .notice, .login .success`
+	// hardcode `background-color: #fff` AND `border-left: 4px solid
+	// #3858e9` (a literal hex, not a variable) — `.success`/`.notice-error`
+	// (the most common one — a failed login attempt) each hardcode their
+	// own light pastel background tint plus their own literal
+	// border-left-color on top of that. Background uses the same
+	// `color-mix()` tinting pattern already used for the Multisite Sites
+	// list table elsewhere in this file, so the tint scales with the
+	// scheme instead of staying a fixed pastel that reads as a glowing
+	// patch in Dark; border-left-color maps to the same status tokens as
+	// the admin-side `.notice-success`/`.notice-error`/`.notice-info`
+	// fix — core's default/generic blue here plays the same "info" role.
+	.login .message,
+	.login .notice,
+	.login .success {
+		background-color: var(--om-box-bg);
+		border-left-color: var(--om-info);
+	}
+
+	.login .success {
+		background-color: color-mix(in srgb, var(--om-success) 12%, var(--om-box-bg));
+		border-left-color: var(--om-success);
+	}
+
+	.login .notice-error {
+		background-color: color-mix(in srgb, var(--om-error) 12%, var(--om-box-bg));
+		border-left-color: var(--om-error);
 	}
 
 	.login #backtoblog a,

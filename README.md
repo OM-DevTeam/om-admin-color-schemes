@@ -29,6 +29,14 @@ WordPress's built-in colors (Light, Blue, Coffee, Ectoplasm, Midnight,
 Ocean, Sunrise), and the whole wp-admin interface (menus, admin bar,
 buttons, tables, notices, the login screen) re-colors to match.
 
+The login screen is a special case — WordPress has no way to know your
+color preference before you've logged in, so this remembers it in a
+browser cookie instead, updated whenever you save your Profile screen.
+If you already picked an OM scheme before this existed, save your
+Profile once (even with no changes) to pick up theming on the login
+screen too. No cookie yet (first visit, a different browser, etc.)
+defaults to following your OS's light/dark setting, same as OM System.
+
 ## Installation
 
 ### Option A: Manual install
