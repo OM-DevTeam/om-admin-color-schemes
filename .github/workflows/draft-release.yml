@@ -28,7 +28,7 @@ jobs:
       - run: npm ci
 
       - name: "Set version"
-        run: sh dev/set-version.sh "${{ github.event.inputs.version }}"
+        run: bash dev/set-version.sh "${{ github.event.inputs.version }}"
 
       - run: npm run lint
       - run: npm run build
