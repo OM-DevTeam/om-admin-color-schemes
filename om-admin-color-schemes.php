@@ -6,7 +6,7 @@
  *              Users pick their preferred mode from Profile > Admin Color
  *              Scheme, same as any built-in WordPress scheme. "OM System"
  *              follows the browser/OS light-dark preference automatically.
- * Version:     1.0.2
+ * Version:     1.1.0
  * Author:      OM Performance Marketers
  *
  * Install: this file must end up as a top-level file directly inside
