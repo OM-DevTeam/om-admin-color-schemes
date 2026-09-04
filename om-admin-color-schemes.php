@@ -194,8 +194,26 @@ class OM_Admin_Color_Schemes {
 	 * mechanism. Falls back to om-system (follows the browser/OS
 	 * light-dark preference) for a visitor with no cookie at all: first
 	 * visit, cleared cookies, a different browser/device, etc.
+	 *
+	 * Filterable via `om_admin_color_schemes_theme_login` (default true)
+	 * so a site that themes the login screen with client-specific
+	 * branding some other way (a different plugin, custom code) can
+	 * disable just this one piece without touching admin theming, the
+	 * editor warning, or anything else this plugin does:
+	 *
+	 *     add_filter( 'om_admin_color_schemes_theme_login', '__return_false' );
+	 *
+	 * sync_login_scheme_cookie() above keeps running either way — the
+	 * cookie itself is harmless if unused, and leaving it in place means
+	 * re-enabling this later (removing the filter) works immediately,
+	 * without needing whoever's logged in to resave their profile again
+	 * just to repopulate it.
 	 */
 	public static function enqueue_login_scheme_style() {
+
+		if ( ! apply_filters( 'om_admin_color_schemes_theme_login', true ) ) {
+			return;
+		}
 
 		$schemes = self::get_schemes();
 		$scheme  = isset( $_COOKIE[ self::LOGIN_SCHEME_COOKIE ] ) ? sanitize_key( wp_unslash( $_COOKIE[ self::LOGIN_SCHEME_COOKIE ] ) ) : '';

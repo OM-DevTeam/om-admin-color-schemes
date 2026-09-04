@@ -473,6 +473,21 @@ context at the login screen to read a preference from directly:**
   button/notice fixes elsewhere in this file, since several of the
   selectors below have identical specificity to core's own.
 
+**Escape hatch for client-branded login screens**: some sites this
+plugin runs on may end up with their OWN login-screen branding — a
+different plugin, custom code — that this plugin's own login theming
+would otherwise clash with. `enqueue_login_scheme_style()` checks the
+`om_admin_color_schemes_theme_login` filter (default `true`) before
+enqueueing anything, so a site-specific `add_filter(
+'om_admin_color_schemes_theme_login', '__return_false' );` disables just
+this one piece — admin theming, the editor-brightness warning, and
+everything else this plugin does keep working normally.
+`sync_login_scheme_cookie()` still runs regardless of this filter — the
+cookie is harmless if nothing ever reads it, and leaving it populated
+means removing the filter later re-enables login theming immediately,
+without needing whoever's logged in to resave their profile just to
+repopulate a cookie that was there the whole time.
+
 **Trade-off, not a bug**: an existing OM-scheme user who never revisits
 their Profile screen again after this feature ships simply won't get the
 cookie set until they do — `profile_update` only fires on an actual save,
