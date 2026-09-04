@@ -1,6 +1,6 @@
 {
   "name": "om-admin-color-schemes",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "SCSS build for the OM Admin Color Schemes WordPress admin color scheme.",
   "scripts": {
