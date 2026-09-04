@@ -64,12 +64,23 @@ class OM_Admin_Color_Schemes {
 	const DARK_CAPABLE_SCHEMES = array( 'om-dark', 'om-system' );
 
 	/**
-	 * Wires up the admin_init and admin_enqueue_scripts hooks. Call once,
-	 * e.g. OM_Admin_Color_Schemes::init().
+	 * Cookie that remembers which OM scheme a logged-in user has active,
+	 * so the login screen (which has no user context to read a
+	 * preference from directly — see enqueue_login_scheme_style()) can
+	 * still theme itself. Kept in sync by sync_login_scheme_cookie().
+	 */
+	const LOGIN_SCHEME_COOKIE = 'om_admin_color_scheme';
+
+	/**
+	 * Wires up the admin_init, admin_enqueue_scripts, profile_update, and
+	 * login_enqueue_scripts hooks. Call once, e.g.
+	 * OM_Admin_Color_Schemes::init().
 	 */
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'register_color_schemes' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_editor_warning_script' ) );
+		add_action( 'profile_update', array( __CLASS__, 'sync_login_scheme_cookie' ) );
+		add_action( 'login_enqueue_scripts', array( __CLASS__, 'enqueue_login_scheme_style' ) );
 	}
 
 	/**
@@ -129,6 +140,95 @@ class OM_Admin_Color_Schemes {
 					'cancel'        => __( 'Stay Here', 'om-admin-color-schemes' ),
 				),
 			)
+		);
+	}
+
+	/**
+	 * Keeps LOGIN_SCHEME_COOKIE in sync with the current user's own
+	 * admin_color, so enqueue_login_scheme_style() below can theme the
+	 * login screen without any user context to read a preference from —
+	 * there's no logged-in user yet at that point. Hooked to
+	 * profile_update, which fires after a save completes, not on every
+	 * admin page load: an existing OM-scheme user who never revisits
+	 * their Profile screen again simply won't get this cookie set until
+	 * they do. Accepted trade-off, not a bug — see CLAUDE.md.
+	 *
+	 * Guarded to the user's own profile save specifically. profile_update
+	 * fires for ANY user's save, including an admin editing someone
+	 * ELSE's profile — without this guard, that admin's own browser would
+	 * get a cookie based on a different user's scheme change.
+	 *
+	 * @param int $user_id ID of the user whose profile was just saved.
+	 */
+	public static function sync_login_scheme_cookie( $user_id ) {
+
+		if ( headers_sent() || get_current_user_id() !== (int) $user_id ) {
+			return;
+		}
+
+		$scheme = get_user_option( 'admin_color', $user_id );
+		$path   = defined( 'SITECOOKIEPATH' ) ? SITECOOKIEPATH : COOKIEPATH;
+		$domain = defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '';
+
+		if ( array_key_exists( $scheme, self::get_schemes() ) ) {
+			// 400 days is the practical maximum browsers honor regardless
+			// of what's requested (Chrome enforces this cap; others
+			// follow) — since this cookie is rewritten on every profile
+			// save, an active user effectively never sees it expire.
+			setcookie( self::LOGIN_SCHEME_COOKIE, $scheme, time() + 400 * DAY_IN_SECONDS, $path, $domain, is_ssl(), true );
+		} else {
+			// Switched to a core scheme (or something not ours) — clear
+			// it, so a stale OM preference doesn't keep theming the login
+			// screen for someone who's since moved off OM schemes.
+			setcookie( self::LOGIN_SCHEME_COOKIE, '', time() - DAY_IN_SECONDS, $path, $domain, is_ssl(), true );
+		}
+	}
+
+	/**
+	 * Themes the login screen from LOGIN_SCHEME_COOKIE. WordPress's own
+	 * admin color scheme system never reaches wp-login.php — core's
+	 * `colors` stylesheet (the one wp_admin_css_color() plugs into) is
+	 * only ever enqueued from wp-admin/admin-header.php and two legacy
+	 * media-iframe contexts, confirmed by reading core directly — so this
+	 * loads its own stylesheet independently rather than relying on that
+	 * mechanism. Falls back to om-system (follows the browser/OS
+	 * light-dark preference) for a visitor with no cookie at all: first
+	 * visit, cleared cookies, a different browser/device, etc.
+	 *
+	 * Filterable via `om_admin_color_schemes_theme_login` (default true)
+	 * so a site that themes the login screen with client-specific
+	 * branding some other way (a different plugin, custom code) can
+	 * disable just this one piece without touching admin theming, the
+	 * editor warning, or anything else this plugin does:
+	 *
+	 *     add_filter( 'om_admin_color_schemes_theme_login', '__return_false' );
+	 *
+	 * sync_login_scheme_cookie() above keeps running either way — the
+	 * cookie itself is harmless if unused, and leaving it in place means
+	 * re-enabling this later (removing the filter) works immediately,
+	 * without needing whoever's logged in to resave their profile again
+	 * just to repopulate it.
+	 */
+	public static function enqueue_login_scheme_style() {
+
+		if ( ! apply_filters( 'om_admin_color_schemes_theme_login', true ) ) {
+			return;
+		}
+
+		$schemes = self::get_schemes();
+		$scheme  = isset( $_COOKIE[ self::LOGIN_SCHEME_COOKIE ] ) ? sanitize_key( wp_unslash( $_COOKIE[ self::LOGIN_SCHEME_COOKIE ] ) ) : '';
+
+		if ( ! array_key_exists( $scheme, $schemes ) ) {
+			$scheme = 'om-system';
+		}
+
+		$file = plugin_dir_path( __FILE__ ) . 'src/' . $schemes[ $scheme ]['css'];
+
+		wp_enqueue_style(
+			'om-admin-color-schemes-login',
+			plugin_dir_url( __FILE__ ) . 'src/' . $schemes[ $scheme ]['css'],
+			array( 'login' ),
+			file_exists( $file ) ? filemtime( $file ) : false
 		);
 	}
 

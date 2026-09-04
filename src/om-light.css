@@ -1109,10 +1109,29 @@ strong,
 
 body.login {
   background: var(--om-body-bg);
+  color: var(--om-body-text);
 }
 
-body.login #login h1 a {
-  background-image: none;
+.login form {
+  background: var(--om-box-bg);
+  border-color: var(--om-box-border);
+}
+
+.login .message,
+.login .notice,
+.login .success {
+  background-color: var(--om-box-bg);
+  border-left-color: var(--om-info);
+}
+
+.login .success {
+  background-color: color-mix(in srgb, var(--om-success) 12%, var(--om-box-bg));
+  border-left-color: var(--om-success);
+}
+
+.login .notice-error {
+  background-color: color-mix(in srgb, var(--om-error) 12%, var(--om-box-bg));
+  border-left-color: var(--om-error);
 }
 
 .login #backtoblog a,
