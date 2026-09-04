@@ -705,6 +705,7 @@ body.wp-admin .color-option.selected {
 div.updated,
 div.error {
   background: var(--om-box-bg);
+  border-color: var(--om-box-border);
   color: var(--om-body-text);
 }
 

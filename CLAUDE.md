@@ -660,6 +660,20 @@ deliberate submenu design change:
   icon's color constant across every state (hover/active/focus only add
   an opacity dim, not a color change), so one rule covers the button, the
   base `::before` glyph, and all three interactive `::before` states.
+- **`.notice`/`div.updated`/`div.error`'s own border** — reported after
+  the initial pass: common.css's base rule sets `border: 1px solid
+  #c3c4c7` on all four sides (plus a wider `border-left-width` for the
+  accent stripe), but only `border-left-color` had been themed here, via
+  the `.notice-success`/`-warning`/`-error`/`-info` rules further down —
+  the other three sides (and the left side too, for a plain notice with
+  none of those type classes) were left on core's hardcoded light grey
+  regardless of scheme. Fixed by adding `border-color: var(--om-box-border)`
+  to the base rule. `border-color` is a shorthand that expands to all four
+  longhand sides including `border-left-color`, so this only works
+  because the base rule is declared *before* the type-specific
+  `border-left-color` overrides — same declaration-order dependency as
+  the button and media-modal fixes elsewhere in this file; don't reorder
+  this section without re-checking that.
 
 **Sidebar submenu background is deliberately darker than the top-level
 menu, not lighter like core's own submenu** (recall from earlier research:

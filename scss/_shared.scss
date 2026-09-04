@@ -959,10 +959,17 @@
 	// -------------------------------------------------- //
 	// Notices / status colors                             //
 	// -------------------------------------------------- //
+	// common.css's base rule sets `border: 1px solid #c3c4c7` on all four
+	// sides (plus a wider `border-left-width` for the accent stripe below)
+	// — only `border-left-color` was themed here, via the type-specific
+	// rules further down, leaving the other three sides (and the left
+	// side too, before any of those more specific rules apply) stuck on
+	// core's hardcoded light grey regardless of scheme.
 	.notice,
 	div.updated,
 	div.error {
 		background: var(--om-box-bg);
+		border-color: var(--om-box-border);
 		color: var(--om-body-text);
 	}
 
