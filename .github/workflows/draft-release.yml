@@ -1,5 +1,31 @@
 name: "Draft new release"
-run-name: "Draft release: `${{ inputs.version }}`"
+run-name: "Draft release: `${{ inputs.version || github.event.pull_request.head.ref }}`"
+
+# Two phases, split across two triggers, because OM-DevTeam's
+# organization-wide ruleset on `master` (required PR + 1 approval; not
+# something this repo controls or can bypass) blocks a direct push to
+# master — which is what this workflow used to do in one shot. See
+# CLAUDE.md's "Releases" section for the full story.
+#
+# Phase 1 (workflow_dispatch, job `prepare-release`): version bump + CSS
+# rebuild, pushed to a `release/{version}` branch, opened as a PR against
+# master. Ends here — a human reviews and merges it through the normal
+# GitHub UI (no auto-merge: the org rule requires an actual approval,
+# which this workflow can't supply for itself).
+#
+# Phase 2 (pull_request closed, job `tag-and-draft-release`): once that PR
+# is merged, tags master's now-current tip and drafts the GitHub Release
+# — the same tag/zip/draft steps this workflow always had, just moved to
+# fire on the merge instead of immediately after the push.
+#
+# If phase 1 finds nothing to change (re-running against an
+# already-released version), there's nothing for a PR to merge — it tags
+# and drafts immediately instead, same as the workflow always did for
+# that case.
+#
+# Releases only ever target master — there's no maintained second release
+# line (hotfix branch, older major version, etc.) for this plugin — so
+# both phases hardcode it rather than deriving a target branch dynamically.
 
 on:
   workflow_dispatch:
@@ -7,14 +33,19 @@ on:
       version:
         description: "Version number"
         required: true
+  pull_request:
+    types: [closed]
+    branches: [master]
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
 
-  draft-new-release:
-    name: "Draft new release"
+  prepare-release:
+    name: "Prepare release"
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
 
@@ -41,24 +72,90 @@ jobs:
       # before triggering a release. Nothing else in this job touches the
       # working tree, so an unscoped `git diff` here only ever reflects
       # the two steps above.
-      - name: "Commit version bump and CSS rebuild"
+      - name: "Push release branch"
+        id: release-branch
         run: |
-          if ! git diff --quiet; then
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
+            git checkout -b "release/${{ github.event.inputs.version }}"
             git add -u
             git commit -m "Release ${{ github.event.inputs.version }}"
-            git push origin "HEAD:${{ github.ref_name }}"
+            git push origin "release/${{ github.event.inputs.version }}"
           fi
 
-      # Tagged here, ourselves, via plain git — rather than letting
-      # action-gh-release below create the tag — so the tag always points
-      # at the (possibly just-amended) commit above, not whatever ref the
-      # workflow happened to start from.
+      # Merge strategy (merge/squash/rebase) doesn't matter to phase 2
+      # below — it re-reads master's tip after the merge rather than
+      # relying on this branch's own commit SHA.
+      - name: "Open release pull request"
+        if: steps.release-branch.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "Release ${{ github.event.inputs.version }}" \
+            --base master \
+            --head "release/${{ github.event.inputs.version }}" \
+            --body "Version bump + rebuilt \`src/*.css\` for \`${{ github.event.inputs.version }}\`, opened by the \"Draft new release\" workflow because master requires a reviewed PR rather than a direct push. Merging this (any merge method) triggers the follow-up job that tags this commit and drafts the GitHub Release."
+
+      # Nothing changed — master is already release-ready (e.g. re-running
+      # for a version someone already prepared and merged by hand), so
+      # there's no PR to wait on. Tag and draft immediately, same as this
+      # workflow always did for that case.
       - name: "Tag the release"
+        if: steps.release-branch.outputs.changed == 'false'
         run: |
           git tag "${{ github.event.inputs.version }}"
           git push origin "${{ github.event.inputs.version }}"
+
+      - name: "Create release artifact"
+        if: steps.release-branch.outputs.changed == 'false'
+        run: sh dev/create-release-files.sh
+
+      - name: "Draft new release"
+        if: steps.release-branch.outputs.changed == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          draft: true
+          tag_name: "${{ github.event.inputs.version }}"
+          name: "${{ github.event.inputs.version }}"
+          files: releases/om-admin-color-schemes.zip
+
+  tag-and-draft-release:
+    name: "Tag and draft release"
+    # The `branches: [master]` filter above already limits this trigger to
+    # PRs targeting master; `release/` further narrows it to ones this
+    # workflow itself opened, so an unrelated PR merge doesn't also try to
+    # tag and draft a release.
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+
+      # Explicitly master, not the default pull_request-event checkout
+      # (which resolves to the PR's own ref) — we want whatever commit the
+      # merge actually produced on master, regardless of merge method.
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+
+      - name: "Determine version"
+        id: version
+        env:
+          HEAD_REF: "${{ github.event.pull_request.head.ref }}"
+        run: echo "version=${HEAD_REF#release/}" >> "$GITHUB_OUTPUT"
+
+      # Tagged here, ourselves, via plain git — rather than letting
+      # action-gh-release below create the tag — so the tag always points
+      # at the branch's current tip (the just-merged release commit), not
+      # whatever ref the workflow happened to start from.
+      - name: "Tag the release"
+        run: |
+          git tag "${{ steps.version.outputs.version }}"
+          git push origin "${{ steps.version.outputs.version }}"
 
       - name: "Create release artifact"
         run: sh dev/create-release-files.sh
@@ -68,6 +165,6 @@ jobs:
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           draft: true
-          tag_name: "${{ github.event.inputs.version }}"
-          name: "${{ github.event.inputs.version }}"
+          tag_name: "${{ steps.version.outputs.version }}"
+          name: "${{ steps.version.outputs.version }}"
           files: releases/om-admin-color-schemes.zip
