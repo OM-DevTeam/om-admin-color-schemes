@@ -32,7 +32,6 @@ on:
         required: true
   pull_request:
     types: [closed]
-    branches: [master]
 
 permissions:
   contents: write
@@ -126,6 +125,12 @@ jobs:
 
   tag-and-draft-release:
     name: "Tag and draft release"
+    # No `branches:` filter on the `pull_request` trigger above, deliberately —
+    # `prepare-release` can open its PR against whichever branch the workflow
+    # was dispatched against (`--base "${{ github.ref_name }}"`), not just
+    # master, so this needs to fire for a merge into any of them. It's still
+    # scoped correctly without one: the `release/` head-branch prefix already
+    # only ever matches PRs this workflow itself opened.
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
     steps:

@@ -263,6 +263,15 @@ failing with a similar rule-violation error, that means the org ruleset's
 scope changed to also cover tags, which would need its own fix (out of
 this repo's control either way — see the note above).
 
+**Known limitation, not yet hardened**: re-triggering `workflow_dispatch`
+for a version whose `release/{version}` branch/PR already exists (e.g.
+the first attempt's PR was closed without merging, or you're retriggering
+after fixing something) will fail — pushing to an already-existing remote
+branch with unrelated history isn't a fast-forward, and `gh pr create`
+also refuses to open a second PR for the same head/base pair. Delete the
+stale `release/{version}` branch (and close its PR, if still open) by
+hand before re-running for that same version.
+
 The zip is a normal single-plugin-folder zip; it does **not** unzip
 directly into a working state inside `wp-content/mu-plugins/`. mu-plugins
 only auto-loads top-level `.php` files, not files inside subdirectories,
