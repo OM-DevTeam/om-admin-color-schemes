@@ -55,6 +55,13 @@ $light: (
 	field-border: #949494, // stronger outline for inputs/selects — core's value, ~3:1 on box-bg
 	table-row-hover-bg: #F6F7F7, // core's own highlight tint (striped/paused/unapproved rows), ~1.07:1 on box-bg
 	table-row-alt-bg: #F6F7F7, // matches core's own alternating-row tint exactly
+	// Dashboard Welcome panel's hero band — core hardcodes this to #151515
+	// regardless of scheme, deliberately always-near-black so it reads as a
+	// bold, contrasting band against a light page (same "always dark, no
+	// matter the scheme" treatment as the admin bar/menu chrome). Light's
+	// own value below just codifies that unmodified core value into the
+	// token system rather than leaving it a silent, unaudited hardcode.
+	welcome-header-bg: #151515,
 	// List table "chrome" — row actions, sort arrows, view-switch icons,
 	// etc. Each is solved to reproduce the SAME contrast ratio core's own
 	// default scheme has for that exact element against its own
@@ -146,6 +153,17 @@ $dark: (
 	field-border: #727272, // ~3:1 on box-bg
 	table-row-hover-bg: #2E2E2E, // ~1.07:1 on box-bg
 	table-row-alt-bg: #313234, // subtler than hover, between body-bg and box-bg
+	// Welcome panel hero band — core's own #151515 sits right on top of
+	// this scheme's own body-bg (#141414, just one shade off), so the
+	// bold contrasting band core intends all but disappears into the
+	// page instead of standing apart from it. OM's actual brand Dark Navy
+	// restores that separation with a deliberately different (blue-cast,
+	// not neutral-grey) tone, rather than just picking a third neutral
+	// grey between body-bg and box-bg — same reasoning as the admin
+	// menu/bar staying on brand navy in Light: one deliberate brand
+	// placement, not a reversion to the moodier all-navy chrome this
+	// scheme otherwise avoids (see the note above this map).
+	welcome-header-bg: #0D2132,
 	// List table "chrome" — same ratios as the $light map above, solved
 	// against this scheme's own box-bg/body-bg instead of re-picked by eye.
 	chrome-muted: #959595, // ~4.85:1 on box-bg

@@ -127,6 +127,34 @@
 		color: var(--om-adminbar-hover-text);
 	}
 
+	// admin-bar.css bundles these six into the exact same `color: #72aee6`
+	// rule as the three above, just for the remaining hover/focus paths
+	// that rule doesn't reach: focus (as opposed to hover) on the icon,
+	// the `.ab-item`'s own `:before` (not just its `.ab-icon` child)
+	// under both `:hover` and `.hover`, and the admin-bar search field's
+	// icon. No `:not(.mobile)` here — core doesn't scope these either,
+	// and unlike the block above (whose `:not(.mobile)` guards against a
+	// specific mobile-view conflict) there's no known equivalent conflict
+	// for this subset. Each of these six is identical selector text to
+	// admin-bar.css's own — an exact specificity tie — so the
+	// `body.wp-admin`-prefixed variants are needed to actually win it;
+	// without them this falls back to whichever stylesheet the current
+	// install happens to enqueue later, which isn't reliably this one.
+	#wpadminbar li a:focus .ab-icon::before,
+	#wpadminbar li .ab-item:focus::before,
+	#wpadminbar li .ab-item:focus .ab-icon::before,
+	#wpadminbar li.hover .ab-item::before,
+	#wpadminbar li:hover #adminbarsearch::before,
+	#wpadminbar li #adminbarsearch.adminbar-focused::before,
+	body.wp-admin #wpadminbar li a:focus .ab-icon::before,
+	body.wp-admin #wpadminbar li .ab-item:focus::before,
+	body.wp-admin #wpadminbar li .ab-item:focus .ab-icon::before,
+	body.wp-admin #wpadminbar li.hover .ab-item::before,
+	body.wp-admin #wpadminbar li:hover #adminbarsearch::before,
+	body.wp-admin #wpadminbar li #adminbarsearch.adminbar-focused::before {
+		color: var(--om-adminbar-hover-text);
+	}
+
 	#wpadminbar .menupop .ab-sub-wrapper {
 		background: var(--om-menu-hover-bg);
 	}
@@ -137,17 +165,70 @@
 		color: var(--om-adminbar-text);
 	}
 
+	// `:hover`/`:focus` are live pseudo-classes tracking the real cursor/
+	// focus position — they don't care whether an ancestor `.menupop`
+	// also carries JS's `.hover` class (used for touch-opened submenus)
+	// or not. So `.menupop.hover ul li a:hover` (an item hovered inside
+	// an already-open, touch-triggered submenu), `.nojs`'s `:hover`
+	// fallback, and a nested trigger `<a>` marked `.menupop.hover > a`
+	// while genuinely `:hover`/`:focus`ed are all just OTHER paths admin-bar.css
+	// uses to reach the exact same `.ab-item` anchors as the two plain
+	// selectors below — not a separate, background-less case. (An
+	// earlier pass here treated them as non-overlapping and gave them a
+	// lighter text-only color with no background change — that was
+	// wrong: on any item actually matching one of these extra selectors,
+	// this rule's background applies too, since its own `:hover`/`:focus`
+	// is equally true, so a lighter text color just went invisible
+	// against this same accent background.) Folded in here so background
+	// and text always change together for every trigger path. The first
+	// two selectors are this file's own (no core equivalent, so no tie);
+	// the remaining five are core's exact selector text, tied with
+	// core's own rule on the `color` property specifically (background
+	// isn't contested at all — core never sets it here) — same
+	// `body.wp-admin` tie-break as elsewhere in this section.
 	#wpadminbar .ab-submenu .ab-item:hover,
-	#wpadminbar .ab-submenu > li > .ab-item:focus {
+	#wpadminbar .ab-submenu > li > .ab-item:focus,
+	#wpadminbar .quicklinks .ab-sub-wrapper .menupop.hover > a,
+	#wpadminbar .quicklinks .menupop.hover ul li a:hover,
+	#wpadminbar .quicklinks .menupop.hover ul li a:focus,
+	#wpadminbar.nojs .quicklinks .menupop:hover ul li a:hover,
+	#wpadminbar.nojs .quicklinks .menupop:hover ul li a:focus,
+	body.wp-admin #wpadminbar .quicklinks .ab-sub-wrapper .menupop.hover > a,
+	body.wp-admin #wpadminbar .quicklinks .menupop.hover ul li a:hover,
+	body.wp-admin #wpadminbar .quicklinks .menupop.hover ul li a:focus,
+	body.wp-admin #wpadminbar.nojs .quicklinks .menupop:hover ul li a:hover,
+	body.wp-admin #wpadminbar.nojs .quicklinks .menupop:hover ul li a:focus {
 		background: var(--om-menu-current-bg);
 		color: var(--om-menu-current-text);
 	}
 
 	// admin-bar.css's own `.quicklinks .menupop ul li a:hover/:focus { color }`
-	// out-specifies the rule above on color alone — match it to win the tie.
+	// (plus its `<strong>`-child variants — same elements, core explicitly
+	// re-declares color on the child too) out-specifies the rule above on
+	// color alone — match it to win the tie. `body.wp-admin` variants
+	// added alongside since even matching core's own selector text only
+	// ties it, and doesn't reliably win on every install.
 	#wpadminbar .quicklinks .menupop ul li a:hover,
-	#wpadminbar .quicklinks .menupop ul li a:focus {
+	#wpadminbar .quicklinks .menupop ul li a:focus,
+	#wpadminbar .quicklinks .menupop ul li a:hover strong,
+	#wpadminbar .quicklinks .menupop ul li a:focus strong,
+	body.wp-admin #wpadminbar .quicklinks .menupop ul li a:hover,
+	body.wp-admin #wpadminbar .quicklinks .menupop ul li a:focus,
+	body.wp-admin #wpadminbar .quicklinks .menupop ul li a:hover strong,
+	body.wp-admin #wpadminbar .quicklinks .menupop ul li a:focus strong {
 		color: var(--om-menu-current-text);
+	}
+
+	// The last two selectors admin-bar.css bundles into that identical
+	// `color: #72aee6` rule target the adjacent tabindex search row, not
+	// an `.ab-item` anchor — genuinely outside the group above (no
+	// `.ab-item` class, so the background rule never matches it), so it
+	// keeps the lighter, background-less accent text. Same tie as above.
+	#wpadminbar .quicklinks .menupop.hover ul li div[tabindex]:hover,
+	#wpadminbar .quicklinks .menupop.hover ul li div[tabindex]:focus,
+	body.wp-admin #wpadminbar .quicklinks .menupop.hover ul li div[tabindex]:hover,
+	body.wp-admin #wpadminbar .quicklinks .menupop.hover ul li div[tabindex]:focus {
+		color: var(--om-adminbar-hover-text);
 	}
 
 	#wpadminbar #wp-admin-bar-my-account.with-avatar #wp-admin-bar-user-info .display-name {
@@ -469,6 +550,26 @@
 	.subsubsub,
 	.no-plugin-results {
 		color: var(--om-chrome-muted-page);
+	}
+
+	// common.css's `.filter-links li > a` (the "All | Mine | ..." tab
+	// strip above some list tables, e.g. Comments) is the same
+	// unselected/selected pairing as `.subsubsub`/`.subsubsub a.current`
+	// above, just a different core component — `#646970` unselected,
+	// `#1d2327` for the `.current` tab. Its own `:hover`/`:focus` state
+	// already reads `var(--wp-admin-theme-color)`, which this file
+	// remaps to `--om-link-color` elsewhere, so no separate hover
+	// override is needed here. Both selectors below are identical text
+	// to core's own — an exact specificity tie — so `body.wp-admin`
+	// variants are needed to actually win it.
+	.filter-links li > a,
+	body.wp-admin .filter-links li > a {
+		color: var(--om-chrome-muted-page);
+	}
+
+	.filter-links .current,
+	body.wp-admin .filter-links .current {
+		color: var(--om-heading-color);
 	}
 
 	// list-tables.css's `.row-actions .network_only, .network_active`
@@ -1022,6 +1123,33 @@
 		border-left-color: var(--om-info);
 	}
 
+	// common.css's `.notice-success.notice-alt`/`.notice-warning.notice-alt`/
+	// `.notice-error.notice-alt`/`div.error.notice-alt`/`div.updated.notice-alt`/
+	// `.notice-info.notice-alt` (the flat, no-left-border notice style) each
+	// hardcode their own `background-color` a second time, at (0,2,0) —
+	// more specific than the base `.notice`/`div.updated`/`div.error` rule
+	// above (0,1,0), so unlike the plain success/warning/error/info notices
+	// (which only override `border-left-color` and otherwise inherit the
+	// base rule's `--om-box-bg` for free), the `.notice-alt` variants need
+	// their own explicit override to actually win. That override ties
+	// core's own `.notice-alt` rules on specificity (identical selector
+	// text, both (0,2,0)), so `body.wp-admin` variants are needed to
+	// actually win the tie rather than depend on load order.
+	.notice-success.notice-alt,
+	div.updated.notice-alt,
+	.notice-warning.notice-alt,
+	.notice-error.notice-alt,
+	div.error.notice-alt,
+	.notice-info.notice-alt,
+	body.wp-admin .notice-success.notice-alt,
+	body.wp-admin div.updated.notice-alt,
+	body.wp-admin .notice-warning.notice-alt,
+	body.wp-admin .notice-error.notice-alt,
+	body.wp-admin div.error.notice-alt,
+	body.wp-admin .notice-info.notice-alt {
+		background-color: var(--om-box-bg);
+	}
+
 	// common.css's `abbr.required, span.required` out-specify plain `.required`
 	// (WP marks required-field markers as one of those two element+class pairs).
 	abbr.required,
@@ -1046,6 +1174,40 @@
 		border-color: var(--om-box-border);
 	}
 
+	// dashboard.css's `.welcome-panel-header-wrap` hardcodes `#151515`
+	// regardless of scheme — an intentional always-dark hero band, not a
+	// gap, so it isn't just swapped for `--om-box-bg` like the container
+	// above. See _tokens.scss's `welcome-header-bg` for why Dark needs
+	// its own distinct value here (Light's stays visually identical to
+	// core's original). Same specificity as core's own rule (0,1,0), so
+	// the `body.wp-admin`-prefixed variant is needed to actually win the
+	// tie — without it this silently fell back to whichever stylesheet
+	// happens to load later, which on this install was core's.
+	.welcome-panel-header-wrap,
+	body.wp-admin .welcome-panel-header-wrap {
+		background-color: var(--om-welcome-header-bg);
+	}
+
+	// The rule above alone was never enough to actually show any change:
+	// `wp_welcome_panel()` (wp-admin/includes/dashboard.php) echoes
+	// wp-admin/images/dashboard-background.svg raw into
+	// `.welcome-panel-header-image`, absolutely positioned to cover the
+	// entire header — and that SVG's very first shape is a full-canvas
+	// rect hardcoded `fill="#151515"`, painted in a stacking layer above
+	// the wrapper's own `background-color`. That rect (not the wrapper)
+	// is the actual color a viewer sees, and it happens to sit almost on
+	// top of Dark's own `--om-body-bg` (#141414 vs #151515) — hence
+	// "blends with the body background". `fill` is an SVG *presentation
+	// attribute*, which carries zero CSS specificity, so any rule
+	// targeting it — no `body.wp-admin` tie-break needed here — wins
+	// outright over the hardcoded attribute regardless of load order.
+	// Matched by its exact fill value rather than DOM position so this
+	// keeps working even if a future core update reorders the SVG's
+	// internal markup.
+	.welcome-panel-header-image path[fill="#151515"] {
+		fill: var(--om-welcome-header-bg);
+	}
+
 	// "At a Glance"/Activity widget's Publishing Soon / Recently Published
 	// lists — base text color plus the same #f6f7f7 alternating-row tint
 	// used for list tables, reusing --om-table-row-alt-bg for consistency.
@@ -1068,6 +1230,21 @@
 	.activity-block,
 	#dashboard_activity .subsubsub {
 		border-color: var(--om-box-border);
+	}
+
+	// dashboard.css's `.empty-container` (the dashed drop-zone placeholder
+	// shown in an empty widget column, or while drag-sorting widgets)
+	// hardcodes `outline: 2px dashed rgb(0, 0, 0, 0.15)` — a 15%-opacity
+	// black outline that was already faint in Light and is next to
+	// invisible against Dark's own near-black postbox-container
+	// background. Only `outline-color` is touched, leaving the
+	// style/width alone. Same selector as core's own rule (an exact tie,
+	// since a longhand challenging a shorthand's expanded sub-property
+	// still resolves by specificity-then-source-order like any other
+	// property), so the `body.wp-admin` variant is needed to actually win.
+	#dashboard-widgets .postbox-container .empty-container,
+	body.wp-admin #dashboard-widgets .postbox-container .empty-container {
+		outline-color: var(--om-box-border);
 	}
 
 	// dashboard.css's `#dashboard-widgets h3/h4` and Quick Draft's `.drafts
@@ -1505,6 +1682,68 @@
 	.health-check-accordion-panel,
 	.privacy-settings-accordion-panel {
 		background: var(--om-box-bg);
+	}
+
+	// -------------------------------------------------- //
+	// Third-party plugin overrides — Yoast SEO            //
+	// -------------------------------------------------- //
+	// Unlike every section above, these selectors come from the Yoast SEO
+	// plugin's own CSS (wordpress-seo/css/dist/*.css), not WP core — kept
+	// in their own section rather than mixed into the core-audit sections
+	// above so it's clear these need re-checking against Yoast's CSS
+	// specifically, not core's, if they ever stop matching.
+
+	// admin-global's `.yoast-settings label`/`.yoast-settings legend`
+	// (the old-style Yoast settings-page fieldset labels) hardcode
+	// `color: #23282d` — unreadable once the surrounding page background
+	// goes dark. Same role as core's own `.form-table th`/`.form-wrap
+	// label`, so it gets the same token. Same specificity as Yoast's own
+	// rule (0,1,1 each), so — same as the `.notice-yoast` fix above and
+	// the `.welcome-panel-header-wrap` fix in the Dashboard section — the
+	// `body.wp-admin`-prefixed variant is needed to actually win the tie;
+	// without it, whichever of the two stylesheets this install happens
+	// to enqueue later silently wins, which was Yoast's.
+	.yoast-settings label,
+	.yoast-settings legend,
+	body.wp-admin .yoast-settings label,
+	body.wp-admin .yoast-settings legend {
+		color: var(--om-heading-color);
+	}
+
+	// admin-global's `.notice-yoast` (the boxed notices Yoast renders on
+	// its own dashboard/settings screens, e.g. "New Recommended settings
+	// available") hardcodes `background: #fff` plus a `border: 1px solid
+	// #c3c4c7` on all four sides — same specificity, (0,1,0), as this
+	// file's own `.notice` background/border rule above, so which one
+	// wins is purely a function of load order between the two
+	// stylesheets. Only the non-left sides are touched here (via
+	// longhands, not the `border-color` shorthand) so Yoast's own
+	// `border-left: 4px solid var(--yoast-color-primary)` brand accent
+	// stripe — set after its base rule, same declaration-order pattern as
+	// this file's own notice-type accent borders — is left alone.
+	.notice-yoast,
+	body.wp-admin .notice-yoast {
+		background: var(--om-box-bg);
+		border-bottom-color: var(--om-box-border);
+		border-right-color: var(--om-box-border);
+		border-top-color: var(--om-box-border);
+	}
+
+	// The Dashboard widget's segmented SEO-score meter renders each
+	// segment as a `.progress__part` div. Its CSS-in-JS styling comes
+	// from a build-hashed class (confirmed live via DevTools, not stable
+	// enough to target directly — see `.progress .progress__part` used
+	// here instead), and the unscored/empty segment's rule hardcodes
+	// `background-color: rgb(221, 221, 221)` — a light neutral grey that
+	// reads as a bright patch against Dark's near-black card background.
+	// Scored segments (good/ok/bad) get their fill color from a
+	// per-instance inline `style` attribute, which always wins over any
+	// external stylesheet rule regardless of specificity — so this only
+	// ever touches the neutral/empty state, never the semantic score
+	// colors, the same "leave status colors alone" rule this file
+	// already follows elsewhere (health-check badges, notice types).
+	#yoast-seo-dashboard-widget .progress .progress__part {
+		background-color: var(--om-box-border);
 	}
 
 	// -------------------------------------------------- //
