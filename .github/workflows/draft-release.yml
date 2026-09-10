@@ -9,20 +9,23 @@ run-name: "Draft release: `${{ inputs.version || github.event.pull_request.head.
 #
 # Phase 1 (workflow_dispatch, job `prepare-release`): version bump + CSS
 # rebuild, pushed to a `release/{version}` branch, opened as a PR against
-# whichever branch the workflow was run against. Ends here — a human
-# reviews and merges it through the normal GitHub UI (no auto-merge:
-# the org rule requires an actual approval, which this workflow can't
-# supply for itself).
+# master. Ends here — a human reviews and merges it through the normal
+# GitHub UI (no auto-merge: the org rule requires an actual approval,
+# which this workflow can't supply for itself).
 #
 # Phase 2 (pull_request closed, job `tag-and-draft-release`): once that PR
-# is merged, tags the now-current tip of the base branch and drafts the
-# GitHub Release — the same tag/zip/draft steps this workflow always had,
-# just moved to fire on the merge instead of immediately after the push.
+# is merged, tags master's now-current tip and drafts the GitHub Release
+# — the same tag/zip/draft steps this workflow always had, just moved to
+# fire on the merge instead of immediately after the push.
 #
 # If phase 1 finds nothing to change (re-running against an
 # already-released version), there's nothing for a PR to merge — it tags
 # and drafts immediately instead, same as the workflow always did for
 # that case.
+#
+# Releases only ever target master — there's no maintained second release
+# line (hotfix branch, older major version, etc.) for this plugin — so
+# both phases hardcode it rather than deriving a target branch dynamically.
 
 on:
   workflow_dispatch:
@@ -32,6 +35,7 @@ on:
         required: true
   pull_request:
     types: [closed]
+    branches: [master]
 
 permissions:
   contents: write
@@ -83,11 +87,9 @@ jobs:
             git push origin "release/${{ github.event.inputs.version }}"
           fi
 
-      # Opened against whichever branch the workflow was dispatched
-      # against (github.ref_name), same as the direct push this replaces
-      # used to target. Merge strategy (merge/squash/rebase) doesn't
-      # matter to phase 2 below — it re-reads the base branch's tip after
-      # the merge rather than relying on this branch's own commit SHA.
+      # Merge strategy (merge/squash/rebase) doesn't matter to phase 2
+      # below — it re-reads master's tip after the merge rather than
+      # relying on this branch's own commit SHA.
       - name: "Open release pull request"
         if: steps.release-branch.outputs.changed == 'true'
         env:
@@ -95,9 +97,9 @@ jobs:
         run: |
           gh pr create \
             --title "Release ${{ github.event.inputs.version }}" \
-            --base "${{ github.ref_name }}" \
+            --base master \
             --head "release/${{ github.event.inputs.version }}" \
-            --body "Version bump + rebuilt \`src/*.css\` for \`${{ github.event.inputs.version }}\`, opened by the \"Draft new release\" workflow because \`${{ github.ref_name }}\` requires a reviewed PR rather than a direct push. Merging this (any merge method) triggers the follow-up job that tags this commit and drafts the GitHub Release."
+            --body "Version bump + rebuilt \`src/*.css\` for \`${{ github.event.inputs.version }}\`, opened by the \"Draft new release\" workflow because master requires a reviewed PR rather than a direct push. Merging this (any merge method) triggers the follow-up job that tags this commit and drafts the GitHub Release."
 
       # Nothing changed — master is already release-ready (e.g. re-running
       # for a version someone already prepared and merged by hand), so
@@ -125,23 +127,20 @@ jobs:
 
   tag-and-draft-release:
     name: "Tag and draft release"
-    # No `branches:` filter on the `pull_request` trigger above, deliberately —
-    # `prepare-release` can open its PR against whichever branch the workflow
-    # was dispatched against (`--base "${{ github.ref_name }}"`), not just
-    # master, so this needs to fire for a merge into any of them. It's still
-    # scoped correctly without one: the `release/` head-branch prefix already
-    # only ever matches PRs this workflow itself opened.
+    # The `branches: [master]` filter above already limits this trigger to
+    # PRs targeting master; `release/` further narrows it to ones this
+    # workflow itself opened, so an unrelated PR merge doesn't also try to
+    # tag and draft a release.
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
     steps:
 
-      # Explicitly the base branch's own tip, not the default
-      # pull_request-event checkout (which resolves to the PR's own
-      # ref) — we want whatever commit the merge actually produced,
-      # regardless of merge method.
+      # Explicitly master, not the default pull_request-event checkout
+      # (which resolves to the PR's own ref) — we want whatever commit the
+      # merge actually produced on master, regardless of merge method.
       - uses: actions/checkout@v7
         with:
-          ref: "${{ github.event.pull_request.base.ref }}"
+          ref: master
 
       - name: "Determine version"
         id: version

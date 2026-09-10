@@ -214,8 +214,10 @@ request" is that old assumption breaking, not a bug in this repo.)
    released — the CSS rebuild might not, if nobody forgot to run it
    locally), the job commits everything itself (as `github-actions[bot]`,
    message `Release {version}`) to a new `release/{version}` branch,
-   pushes it, and opens a PR from that branch against whichever branch
-   the workflow was run against — then **stops**. This is what stops a
+   pushes it, and opens a PR from that branch against `master` (hardcoded
+   — there's no maintained second release line for this plugin, so unlike
+   the original single-job workflow this doesn't derive a target branch
+   dynamically) — then **stops**. This is what stops a
    release from ever tagging a stale plugin-header version or stale CSS
    just because someone forgot one of those two steps locally before
    triggering a release; it's also as far as automation can take a
