@@ -189,9 +189,22 @@ Cutting a release means running the **"Draft new release"** workflow from
 the Actions tab (`workflow_dispatch`, takes a `version` input like
 `1.2.0`). It mirrors the same pattern used in
 [crstauf/query-monitor-extend](https://github.com/crstauf/query-monitor-extend)
-(`draft-release.yml` + `dev/create-release-files.sh`):
+(`draft-release.yml` + `dev/create-release-files.sh`) — split across two
+jobs/triggers, not one straight-through run, because of an
+OM-DevTeam **organization-wide** ruleset on `master` (not something this
+repo controls or can bypass) requiring every change to land via a
+reviewed, approved pull request. A single job can't both push the version
+bump directly to `master` *and* respect that rule, so the workflow instead
+opens a PR and waits for a human to merge it before the rest can run —
+see the workflow file's own top-of-file comment for the two-job/two-trigger
+split this produces. (An earlier version of this workflow pushed straight
+to `master` in one shot; that stopped working the moment the org ruleset
+was added — a run failing with `GH013: Repository rule violations
+found for refs/heads/master` / "Changes must be made through a pull
+request" is that old assumption breaking, not a bug in this repo.)
 
-1. `npm ci`, then `dev/set-version.sh` updates the version in
+1. **`prepare-release` job** (fires on `workflow_dispatch`): `npm ci`,
+   then `dev/set-version.sh` updates the version in
    `om-admin-color-schemes.php`'s header and (via `npm version
    --no-git-tag-version`) `package.json`/`package-lock.json` — see
    "File layout" above. `npm run lint && npm run build` follow, producing
@@ -199,20 +212,36 @@ the Actions tab (`workflow_dispatch`, takes a `version` input like
 2. **If any of that differs from what's already committed** (the version
    bump always will, at minimum, unless re-running for a version already
    released — the CSS rebuild might not, if nobody forgot to run it
-   locally), the workflow commits everything itself (as
-   `github-actions[bot]`, message `Release {version}`) and pushes that
-   commit to whichever branch the workflow was run against. This is what
-   stops a release from ever tagging a stale plugin-header version or
-   stale CSS just because someone forgot one of those two steps locally
-   before triggering a release. If nothing differs, this step is a no-op.
-3. The workflow tags that commit — the one the previous step may have
-   just pushed, not necessarily the one the workflow started from — as
-   the `version` input, via plain `git tag`/`git push`, before
-   `action-gh-release` (next step) ever runs. Tagging it directly like
-   this, ourselves, rather than leaving `action-gh-release` to create the
-   tag, is what guarantees the tag always points at a commit with the
-   correct version header and CSS.
-4. `dev/create-release-files.sh` assembles `releases/om-admin-color-schemes/`
+   locally), the job commits everything itself (as `github-actions[bot]`,
+   message `Release {version}`) to a new `release/{version}` branch,
+   pushes it, and opens a PR from that branch against whichever branch
+   the workflow was run against — then **stops**. This is what stops a
+   release from ever tagging a stale plugin-header version or stale CSS
+   just because someone forgot one of those two steps locally before
+   triggering a release; it's also as far as automation can take a
+   release now, since actually landing that PR on `master` requires a
+   human reviewer's approval the workflow can't supply for itself. Go
+   review and merge it (any merge method — squash/merge/rebase are all
+   fine, see point 4) like any other PR. If nothing differs, this step —
+   and the PR — is skipped entirely, and the job falls through to tag +
+   draft immediately (points 3–5 below), same as it always did for that
+   case.
+3. **`tag-and-draft-release` job** (fires when a PR is closed, filtered to
+   merged PRs whose head branch starts with `release/`): checks out the
+   PR's base branch (its current tip, post-merge — not the PR's own
+   branch) and tags that commit as the version parsed back out of the
+   branch name (`release/{version}` → `{version}`), via plain
+   `git tag`/`git push`, before `action-gh-release` (next step) ever
+   runs. Tagging it directly like this, ourselves, rather than leaving
+   `action-gh-release` to create the tag, is what guarantees the tag
+   always points at a commit with the correct version header and CSS.
+4. Because this job re-reads the base branch's tip after the PR closes,
+   rather than trusting a specific commit SHA carried over from step 2,
+   it doesn't matter which merge method was used to land the release
+   PR — squash and rebase both produce a brand new commit SHA on
+   `master` that step 2's own commit is no longer part of, and this
+   still tags the right thing either way.
+5. `dev/create-release-files.sh` assembles `releases/om-admin-color-schemes/`
    — the plugin's own folder, matching normal WordPress plugin zip
    conventions rather than pre-wrapping it in a `mu-plugins/` folder —
    containing `om-admin-color-schemes.php`, `src/*.css` and
@@ -220,10 +249,19 @@ the Actions tab (`workflow_dispatch`, takes a `version` input like
    relationships the PHP already expects via
    `plugin_dir_url( __FILE__ ) . 'src/'` / `'js/'`), and `README.md`. That
    folder is then zipped as-is into `releases/om-admin-color-schemes.zip`.
-5. `softprops/action-gh-release` publishes a **draft** GitHub Release
-   attached to the tag from step 3, named after the version input, with
-   that zip attached. Review the draft and hit "Publish" manually —
-   nothing goes live automatically.
+6. `softprops/action-gh-release` publishes a **draft** GitHub Release
+   attached to the tag from step 3, named after the version, with that
+   zip attached. Review the draft and hit "Publish" manually — nothing
+   goes live automatically.
+
+Tag pushes (`refs/tags/*`) are a separate ref namespace from branch
+pushes (`refs/heads/*`), and the org ruleset that blocks a direct push to
+`master` targets branches specifically — so step 3's `git push` of the
+version tag is expected to keep working unchanged; only the *branch*
+push this workflow used to do needed to change. If a tag push ever starts
+failing with a similar rule-violation error, that means the org ruleset's
+scope changed to also cover tags, which would need its own fix (out of
+this repo's control either way — see the note above).
 
 The zip is a normal single-plugin-folder zip; it does **not** unzip
 directly into a working state inside `wp-content/mu-plugins/`. mu-plugins
