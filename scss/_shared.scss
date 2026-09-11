@@ -829,9 +829,64 @@
 		color: var(--om-body-text);
 	}
 
+	// edit.css's `p.description code, .form-wrap p code` — a separate,
+	// slightly darker color than the plain description text handled just
+	// above; same "code reads a shade darker" pattern as .notice-title
+	// vs. .notice p elsewhere in this file. Same tie-breaking concern too.
+	p.description code,
+	.form-wrap p code,
+	body.wp-admin p.description code,
+	body.wp-admin .form-wrap p code {
+		color: var(--om-heading-color);
+	}
+
 	hr,
 	.wp-header-end {
 		border-color: var(--om-box-border);
+	}
+
+	// common.css's tabbed-interface rules (Import/Export, Site Health, and
+	// many plugin settings screens' sub-navigation) were entirely
+	// unthemed — no override existed at all. `.nav-tab`/`.nav-tab-active`
+	// tie this file's specificity exactly, same unreliable-load-order
+	// concern as the .form-table th / p.description ties above, so
+	// body.wp-admin variants are added preemptively rather than waiting
+	// to find out live. The active tab's background is deliberately
+	// `--om-body-bg` (not a box/card token) to reproduce core's own
+	// design: the active tab visually merges into the page below it
+	// (core's `#f0f0f1` active-tab background matches its own page
+	// background exactly), with its border-bottom set to the same color
+	// specifically to "erase" the seam the same way core's does.
+	.nav-tab-wrapper {
+		border-color: var(--om-box-border);
+	}
+
+	.nav-tab,
+	body.wp-admin .nav-tab {
+		background: var(--om-table-row-alt-bg);
+		border-color: var(--om-box-border);
+		color: var(--om-body-text);
+	}
+
+	.nav-tab:hover,
+	.nav-tab:focus,
+	body.wp-admin .nav-tab:hover,
+	body.wp-admin .nav-tab:focus {
+		background-color: var(--om-box-bg);
+		color: var(--om-heading-color);
+	}
+
+	.nav-tab-active,
+	.nav-tab-active:hover,
+	.nav-tab-active:focus,
+	.nav-tab-active:focus:active,
+	body.wp-admin .nav-tab-active,
+	body.wp-admin .nav-tab-active:hover,
+	body.wp-admin .nav-tab-active:focus,
+	body.wp-admin .nav-tab-active:focus:active {
+		background: var(--om-body-bg);
+		border-bottom-color: var(--om-body-bg);
+		color: var(--om-heading-color);
 	}
 
 	// common.css hardcodes `#screen-meta { background-color: #fff; }` and

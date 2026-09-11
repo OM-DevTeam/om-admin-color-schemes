@@ -615,9 +615,48 @@ body.wp-admin .form-wrap p {
   color: var(--om-body-text);
 }
 
+p.description code,
+.form-wrap p code,
+body.wp-admin p.description code,
+body.wp-admin .form-wrap p code {
+  color: var(--om-heading-color);
+}
+
 hr,
 .wp-header-end {
   border-color: var(--om-box-border);
+}
+
+.nav-tab-wrapper {
+  border-color: var(--om-box-border);
+}
+
+.nav-tab,
+body.wp-admin .nav-tab {
+  background: var(--om-table-row-alt-bg);
+  border-color: var(--om-box-border);
+  color: var(--om-body-text);
+}
+
+.nav-tab:hover,
+.nav-tab:focus,
+body.wp-admin .nav-tab:hover,
+body.wp-admin .nav-tab:focus {
+  background-color: var(--om-box-bg);
+  color: var(--om-heading-color);
+}
+
+.nav-tab-active,
+.nav-tab-active:hover,
+.nav-tab-active:focus,
+.nav-tab-active:focus:active,
+body.wp-admin .nav-tab-active,
+body.wp-admin .nav-tab-active:hover,
+body.wp-admin .nav-tab-active:focus,
+body.wp-admin .nav-tab-active:focus:active {
+  background: var(--om-body-bg);
+  border-bottom-color: var(--om-body-bg);
+  color: var(--om-heading-color);
 }
 
 #screen-meta,
