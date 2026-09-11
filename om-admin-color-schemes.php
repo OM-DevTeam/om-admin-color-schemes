@@ -242,6 +242,15 @@ class OM_Admin_Color_Schemes {
 	 * re-enabling this later (removing the filter) works immediately,
 	 * without needing whoever's logged in to resave their profile again
 	 * just to repopulate it.
+	 *
+	 * Versioned by get_version() (this plugin's own header Version), not
+	 * filemtime(), for the same reason register_color_schemes() cache-busts
+	 * the wp-admin colors stylesheet that way — a plugin release with no
+	 * WP core release in between must still change the URL for any
+	 * browser/CDN that already cached this CSS. Unlike that stylesheet,
+	 * this handle isn't routed through wp_style_loader_src(), so there's no
+	 * `ver` rewrite to work around; wp_enqueue_style()'s own $ver argument
+	 * is enough here.
 	 */
 	public static function enqueue_login_scheme_style() {
 
@@ -256,13 +265,11 @@ class OM_Admin_Color_Schemes {
 			$scheme = 'om-system';
 		}
 
-		$file = plugin_dir_path( __FILE__ ) . 'src/' . $schemes[ $scheme ]['css'];
-
 		wp_enqueue_style(
 			'om-admin-color-schemes-login',
 			plugin_dir_url( __FILE__ ) . 'src/' . $schemes[ $scheme ]['css'],
 			array( 'login' ),
-			file_exists( $file ) ? filemtime( $file ) : false
+			self::get_version()
 		);
 	}
 
