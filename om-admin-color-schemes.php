@@ -85,6 +85,22 @@ class OM_Admin_Color_Schemes {
 
 	/**
 	 * Registers each scheme defined in get_schemes() via wp_admin_css_color().
+	 *
+	 * The `?omacs_version=` query arg is the only way this stylesheet's URL
+	 * ever changes between plugin releases. wp_style_loader_src() (core's
+	 * `style_loader_src` filter callback for the `colors` handle this plugs
+	 * into) rebuilds the href by copying the `colors` handle's own query
+	 * string — which core keys off `ver=$wp_version` — onto whatever URL
+	 * wp_admin_css_color() was given, via add_query_arg(). That overwrites
+	 * any `ver` key we set ourselves, so a `ver`-based cache-buster here
+	 * would silently track WordPress core's version instead of this
+	 * plugin's; add_query_arg() only touches keys already present in
+	 * core's query string, so a differently-named key survives untouched.
+	 * Without this, browsers and CDNs that already cached the CSS at this
+	 * URL (WP Engine serves it with a 1-year Cache-Control) keep serving
+	 * the old file after a plugin update with no WP core release in
+	 * between — confirmed against novocaine's novocainedev environment
+	 * after the 1.1.1 release.
 	 */
 	public static function register_color_schemes() {
 
@@ -94,11 +110,29 @@ class OM_Admin_Color_Schemes {
 			wp_admin_css_color(
 				$slug,
 				$scheme['label'],
-				$base_url . $scheme['css'],
+				add_query_arg( 'omacs_version', self::get_version(), $base_url . $scheme['css'] ),
 				$scheme['colors'],
 				$scheme['icon_colors']
 			);
 		}
+	}
+
+	/**
+	 * Reads this plugin's own header Version, so cache-busting stays in
+	 * sync with dev/set-version.sh's bump automatically instead of
+	 * duplicating the version in a second constant someone has to
+	 * remember to update.
+	 *
+	 * @return string
+	 */
+	private static function get_version() {
+		static $version = null;
+
+		if ( null === $version ) {
+			$version = get_file_data( __FILE__, array( 'Version' => 'Version' ) )['Version'];
+		}
+
+		return $version;
 	}
 
 	/**
